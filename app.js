@@ -8,6 +8,7 @@ const server = require("http").createServer(app);
 const io = require("socket.io")(server);
 const pg_client = require("./config/database");
 
+const compression = require("compression");
 const cors = require("cors");
 const morgan = require("morgan");
 const helmet = require("helmet");
@@ -24,43 +25,15 @@ const {
   generateDotEnv,
 } = require("./lib/fn/fn.generator");
 
-process.title = _.npm_package_name;
-
-// Env
-if (_.GENERATE == "TRUE") {
-  const envdir = path.join(__dirname, ".env");
-  fs.writeFile(envdir, generateDotEnv(), "utf-8", (write_err) => {
-    if (write_err) {
-      console.error(write_err);
-    } else {
-      console.log("+".repeat(50));
-      throw {
-        status: "DotEnv (.env) Saved",
-        important: "!!! Modify .env Configuration !!!",
-      };
-    }
-  });
-}
+process.title = _.npm_package_name || process.title;
 
 // Update Token Key Every Version | Invalidate Old Tokens
 _.TOKEN_KEY += "v" + _.npm_package_version || "";
 _.TOKEN_KEY_PUB += "v" + _.npm_package_version || "";
-console.log(process);
-
-// Save DB Structure
-fs.writeFile(
-  path.join(__dirname, "database.sql"),
-  generateDatabaseSQL(),
-  "utf-8",
-  (write_err) => {
-    console.log("-".repeat(50));
-    if (write_err) console.error(write_err);
-    console.log("Database structure saved on ./database.sql");
-    console.log("-".repeat(50));
-  }
-);
 
 // Server and Security
+app.set("view cache", true);
+app.use(compression());
 app.use(cors());
 app.use(helmet());
 app.use(bodyParser.json());
@@ -90,43 +63,85 @@ app.use((req, res, next) => {
   next();
 });
 
-// System Log
-const appResSend = app.response.send;
-app.response.send = function sendOverWrite(body) {
-  appResSend.call(this, body);
-  this.__custombody__ = body;
-};
-morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
-app.use(
-  morgan(
-    `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)`
-  )
-);
-app.use(
-  morgan(
-    `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
+console.log(process);
+
+// Check if Running on Production
+if (!_.NODE_ENV || _.NODE_ENV != "production") {
+  // Save DB Structure
+  if (process.argv.includes("--gensql")) {
+    const gensqlid = process.argv.indexOf("--gensql");
+    let sqloc =
+      process.argv[gensqlid + 1] && !process.argv[gensqlid + 1].startsWith("--")
+        ? process.argv[gensqlid + 1]
+        : "database.sql";
+    console.log("-".repeat(50));
+    console.log("GEndb", sqloc);
+    fs.writeFile(sqloc, generateDatabaseSQL(), "utf-8", (write_err) => {
+      console.log("-".repeat(50));
+      if (write_err) {
+        console.error("Database failed to generate .sql:", write_err);
+      } else {
+        console.log("Database structure saved on ./database.sql");
+      }
+      console.log("-".repeat(50));
+    });
+  }
+  // Generate dotEnv (.env)
+  if (process.argv.includes("--genenv")) {
+    const envdir = path.join(__dirname, ".env");
+    fs.writeFile(envdir, generateDotEnv(), "utf-8", (write_err) => {
+      if (write_err) {
+        console.error(write_err);
+      } else {
+        console.log("!".repeat(50));
+        console.log({
+          status: "DotEnv (.env) Saved",
+          important: "Modify .env Configuration",
+        });
+        console.log("!".repeat(50));
+        process.exit(0);
+      }
+    });
+  }
+} else {
+  // Console Log
+  const appResSend = app.response.send;
+  app.response.send = function sendOverWrite(body) {
+    appResSend.call(this, body);
+    this.__custombody__ = body;
+  };
+  morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
+  app.use(
+    morgan(
+      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)`
+    )
+  );
+  // HTTP/s Requests Log
+  app.use(
+    morgan(
+      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
     :res-body`,
-    {
-      stream: rfs.createStream(
-        () => {
-          const fn = (n) => String(n).padStart(2, 0);
-          const time = new Date();
-          const year = time.getFullYear();
-          const month = fn(time.getMonth() + 1);
-          const yearmonth = [year, month].join("");
-          const day = fn(time.getDate());
-          const hour = fn(time.getHours());
-          const minute = fn(time.getMinutes());
-          return `${yearmonth}/${yearmonth}${day}-access.log`;
-        },
-        {
-          interval: _.LOG_INTERVAL || "1d",
-          path: path.join(__dirname, _.LOG_DIR || "log"),
-        }
-      ),
-    }
-  )
-);
+      {
+        stream: rfs.createStream(
+          () => {
+            const fn = (n) => String(n).padStart(2, 0);
+            const time = new Date();
+            const yearmonth = [
+              time.getUTCFullYear(),
+              fn(time.getUTCMonth() + 1),
+            ].join("");
+            const day = fn(time.getUTCDate());
+            return `${yearmonth}/${yearmonth}${day}-access.log`;
+          },
+          {
+            interval: _.LOG_INTERVAL || "1d",
+            path: path.join(__dirname, _.LOG_DIR || "log"),
+          }
+        ),
+      }
+    )
+  );
+}
 
 // Static
 app.use("/", express.static("./public"));
@@ -325,7 +340,8 @@ app.use((err, req, res) => {
   return res.status(500).json(errorJsonResponse(undefined, "Server Error"));
 });
 
-server.listen(_.SRV_MAIN_PORT, () => {
-  if (_.SRV_MAIN_PORT)
-    console.log("Server is up and running on *:" + _.SRV_MAIN_PORT);
-});
+if (_.npm_lifecycle_event != "setup")
+  server.listen(_.SRV_MAIN_PORT, () => {
+    if (_.SRV_MAIN_PORT)
+      console.log("Server is up and running on *:" + _.SRV_MAIN_PORT);
+  });
