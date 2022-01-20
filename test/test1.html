@@ -1,0 +1,40 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    Please check console for realtime notification
+    <script src="http://localhost:7001/socket.io/socket.io.js"></script>
+    <script src="/test/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+
+    <script>
+      $(function () {
+        let socket = io.connect("http://localhost:7001");
+        const listerner = {
+          channel: "all",
+          token:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJuYW1lIjoibWlrZTEiLCJwYXNzd29yZCI6IiQyYiQxMCRrcXRLMlRKS3VESFFFQ29SeFdvYlVlZjlnTEt3UUlJY2IuTXo5Zzd3dDRmY2tIUWh5czM5VyIsInVzZXJpZCI6MTAwMDAwMiwiZmlyc3RuYW1lIjoiU21pdGgiLCJtaWRkbGVuYW1lIjpudWxsLCJsYXN0bmFtZSI6IkphY2tzb24iLCJwb3NpdGlvbiI6IlN1cGVyIEFkbWluIiwiZ2VuZGVyIjoibSIsImJyYW5jaF9sb2NhdGlvbiI6IlBhbmFjYW4ifSwiaWF0IjoxNjQyMjkyMDAzfQ.5Z01sH4m8BEWcMmQSEFSPQhs56yEEW8TvVmbuD5DvIM",
+        };
+
+        socket.on("connected", (data) => {
+          console.log("Listening", listerner);
+          socket.emit("RealtimeUpdates", listerner);
+        });
+
+        socket.on("notif", (payload) => {
+          console.log("Notif:", payload);
+        });
+
+        socket.on(listerner.channel, (payload) => {
+          console.log(listerner.channel, payload);
+        });
+
+        socket.on("error", (payload) => {
+          console.log("Error:", payload);
+        });
+      });
+    </script>
+  </body>
+</html>
