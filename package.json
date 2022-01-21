@@ -2,7 +2,7 @@
   "name": "realtime_api",
   "version": "0.0.2",
   "description": "Express and PostgreSQL Realtime API",
-  "private": true,
+  "private": false,
   "main": "app.js",
   "scripts": {
     "setup": "node app.js --gensql database.sql --genenv",
