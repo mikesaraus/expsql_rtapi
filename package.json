@@ -5,7 +5,7 @@
   "private": true,
   "main": "app.js",
   "scripts": {
-    "setup": "node app.js --gensql assets/database.sql --genenv",
+    "setup": "node app.js --gensql database.sql --genenv",
     "dev": "DEBUG=express:* nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js",
     "start": "DEBUG=express:* NODE_ENV=production node app.js --log 2>&1 | tee ./log/console-\"$(date '+%Y%m%d-%H%M%S')\".log -a -p"
   },

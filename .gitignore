@@ -1,9 +1,11 @@
-#.env
+.env
 .DS_Store
 .thumbs.db
 .vscode
 *.log
+*.sql
 
-log/*
+log
+test
 node_modules
 package-lock.json
