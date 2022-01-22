@@ -34,7 +34,7 @@ module.exports = {
         if (cols.includes(key)) cols.splice(cols.indexOf(key), 1);
       });
     let pg_setvals = [];
-    let pg_query = `INSERT INTO ` + table + `(` + cols + `) VALUES(`;
+    let pg_query = `INSERT INTO ${table} (${cols}) VALUES(`;
     for (var i = 1; i <= cols.length; i++) {
       pg_query += `$` + i;
       if (i != cols.length) pg_query += `, `;
@@ -53,14 +53,14 @@ module.exports = {
 
   service_view: (data, callBack) => {
     let __colsData = dbTables[table].columns;
-    let pg_query = `SELECT * FROM ` + table;
+    let pg_query = `SELECT * FROM ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
       data,
       __colsData
     );
-    if (query_cond.length) pg_query += ` WHERE ` + query_cond.join(" AND ");
-    if (query_endstement.length) pg_query += ` ` + query_endstement.join(" ");
+    if (query_cond.length) pg_query += ` WHERE ${query_cond.join(" AND ")}`;
+    if (query_endstement.length) pg_query += ` ${query_endstement.join(" ")}`;
     let pg_setvals = [];
     if (query_vals.length) pg_setvals.push(...query_vals);
     pg_client.query(pg_query, pg_setvals, (error, results) => {
@@ -90,21 +90,20 @@ module.exports = {
       if (!cols.includes(col)) missingData.push(col);
     });
     if (missingData.length)
-      return callBack({ detail: "Missing Data: " + missingData });
+      return callBack({ detail: `Missing Data: ${missingData}` });
     const toupdate = data.__toupdate;
     if (noncol.length)
       noncol.forEach((key) => {
         if (cols.includes(key)) cols.splice(cols.indexOf(key), 1);
       });
     let pg_setvals = [];
-    let pg_query = `UPDATE ` + table + ` SET `;
+    let pg_query = `UPDATE ${table} SET `;
     for (var i = 1; i <= cols.length; i++) {
-      pg_query += cols[i - 1] + `=$` + i;
+      pg_query += cols[i - 1] + `=$${i}`;
       if (i != cols.length) pg_query += `, `;
       pg_setvals.push(data[cols[i - 1]]);
     }
-    pg_query +=
-      ` WHERE ` + toupdate.__tokey + `=$` + (cols.length + 1) + ` RETURNING *`;
+    pg_query += ` WHERE ${toupdate.__tokey}=$${cols.length + 1} RETURNING *`;
     pg_setvals.push(toupdate.__toval);
     pg_client.query(pg_query, pg_setvals, (error, results) => {
       if (error) {
@@ -124,11 +123,10 @@ module.exports = {
       if (!cols.includes(col)) missingData.push(col);
     });
     if (missingData.length)
-      return callBack({ detail: "Missing Data: " + missingData });
+      return callBack({ detail: `Missing Data: ${missingData}` });
     const toupdate = data.__toupdate;
     let pg_setvals = [toupdate.__toval];
-    let pg_query =
-      `DELETE FROM ` + table + ` WHERE ` + toupdate.__tokey + `=$1`;
+    let pg_query = `DELETE FROM ${table} WHERE ${toupdate.__tokey}=$1`;
     pg_client.query(pg_query, pg_setvals, (error, results) => {
       if (error) {
         error.query = queryVars2Vals(pg_query, pg_setvals);
@@ -156,61 +154,60 @@ module.exports = {
     const _channels = ["OverTheCounter", "Internet", "Mobile", "ATM", "Phone"];
     _channels.forEach((channel) => {
       _selections_count.push(
-        `COALESCE(SUM(CASE WHEN channel='` +
-          channel +
-          `' THEN 1 ELSE 0 END), 0) as count_channel_` +
-          channel.replaceAll(".", "")
+        `COALESCE(SUM(CASE WHEN channel='${channel}' THEN 1 ELSE 0 END), 0) as count_channel_${channel.replaceAll(
+          ".",
+          ""
+        )}`
       );
       _selections_total.push(
-        `COALESCE(SUM(CASE WHEN channel='` +
-          channel +
-          `' THEN amount_payed ELSE 0 END), 0) as total_channel_` +
-          channel.replaceAll(".", "")
+        `COALESCE(SUM(CASE WHEN channel='${channel}' THEN amount_payed ELSE 0 END), 0) as total_channel_${channel.replaceAll(
+          ".",
+          ""
+        )}`
       );
     });
     const _channels_online = ["Gcash", "Coins.ph", "Paymaya", "Debit"];
     _channels_online.forEach((channel) => {
       _selections_count.push(
-        `COALESCE(SUM(CASE WHEN channel_online='` +
-          channel +
-          `' THEN 1 ELSE 0 END), 0) as count_online_` +
-          channel.replaceAll(".", "")
+        `COALESCE(SUM(CASE WHEN channel_online='${channel}' THEN 1 ELSE 0 END), 0) as count_online_${channel.replaceAll(
+          ".",
+          ""
+        )}`
       );
       _selections_total.push(
-        `COALESCE(SUM(CASE WHEN channel_online='` +
-          channel +
-          `' THEN amount_payed ELSE 0 END), 0) as total_online_` +
-          channel.replaceAll(".", "")
+        `COALESCE(SUM(CASE WHEN channel_online='${channel}' THEN amount_payed ELSE 0 END), 0) as total_online_${channel.replaceAll(
+          ".",
+          ""
+        )}`
       );
     });
     const _paymethod = ["Cash", "Check", "Debit"];
     _paymethod.forEach((paymod) => {
       _selections_count.push(
-        `COALESCE(SUM(CASE WHEN paymethod='` +
-          paymod +
-          `' THEN 1 ELSE 0 END), 0) as count_paymethod_` +
-          paymod.replaceAll(".", "")
+        `COALESCE(SUM(CASE WHEN paymethod='${paymod}' THEN 1 ELSE 0 END), 0) as count_paymethod_${paymod.replaceAll(
+          ".",
+          ""
+        )}`
       );
       _selections_total.push(
-        `COALESCE(SUM(CASE WHEN paymethod='` +
-          paymod +
-          `' THEN amount_payed ELSE 0 END), 0) as total_paymethod_` +
-          paymod.replaceAll(".", "")
+        `COALESCE(SUM(CASE WHEN paymethod='${paymod}' THEN amount_payed ELSE 0 END), 0) as total_paymethod_${paymod.replaceAll(
+          ".",
+          ""
+        )}`
       );
     });
-    pg_query = [
-      `SELECT`,
-      [_selections_count.join(", "), _selections_total.join(", ")].join(", "),
-      `FROM`,
-      table,
-    ].join(" ");
+    pg_query = `SELECT ${[
+      _selections_count.join(", "),
+      _selections_total.join(", "),
+    ].join(", ")} FROM
+      ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
       data,
       __colsData
     );
-    if (query_cond.length) pg_query += ` WHERE ` + query_cond.join(" AND ");
-    if (query_endstement.length) pg_query += ` ` + query_endstement.join(" ");
+    if (query_cond.length) pg_query += ` WHERE ${query_cond.join(" AND ")}`;
+    if (query_endstement.length) pg_query += ` ${query_endstement.join(" ")}`;
     let pg_setvals = [];
     if (query_vals.length) pg_setvals.push(...query_vals);
     pg_client.query(pg_query, pg_setvals, (error, results) => {
@@ -273,28 +270,26 @@ module.exports = {
     let __colsData = dbTables[table].columns;
     let columns = data.groupby ? data.groupby.split("||") : ["branch_location"];
     data.groupby = columns.join("||");
-    let pg_query = `SELECT ` + columns.join(", ");
+    let pg_query = `SELECT ${columns.join(", ")}`;
     let _algo_sum = data.sum ? data.sum.split("||") : ["amount_payed"];
     let _algo_count = data.count ? data.count.split("||") : ["trans_id"];
     _algo_sum.forEach((_algo) => {
-      pg_query += `, SUM(` + _algo + `)::numeric AS sum_` + _algo;
+      pg_query += `, SUM(${_algo})::numeric AS sum_${_algo}`;
     });
     _algo_count.forEach((_algo) => {
       let _aval = _algo.startsWith(":u:") ? _algo.replace(":u:", "") : _algo;
-      pg_query +=
-        `, COUNT(` +
-        (_algo.startsWith(":u:") ? `DISTINCT ` + _aval : _aval) +
-        `)::numeric AS count_` +
-        _aval;
+      pg_query += `, COUNT(${
+        _algo.startsWith(":u:") ? `DISTINCT ${_aval}` : _aval
+      })::numeric AS count_${_aval}`;
     });
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
       data,
       __colsData
     );
-    pg_query += ` FROM ` + table;
-    if (query_cond.length) pg_query += ` WHERE ` + query_cond.join(" AND ");
-    if (query_endstement.length) pg_query += ` ` + query_endstement.join(" ");
+    pg_query += ` FROM ${table}`;
+    if (query_cond.length) pg_query += ` WHERE ${query_cond.join(" AND ")}`;
+    if (query_endstement.length) pg_query += ` ${query_endstement.join(" ")}`;
     let pg_setvals = [];
     if (query_vals.length) pg_setvals.push(...query_vals);
     pg_client.query(pg_query, pg_setvals, (error, results) => {

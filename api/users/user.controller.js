@@ -24,7 +24,7 @@ module.exports = {
     let blklists = block_usernames.concat(
       blklist.filter((item) => blklist.indexOf(item) < 1)
     );
-    data.username = data.username.toLowerCase();
+    if (data.username) data.username = data.username.toLowerCase();
     if (
       blklists.includes(data.username) &&
       regex_username.test(data.username)
@@ -61,7 +61,7 @@ module.exports = {
 
   view: (req, res) => {
     let hidden_columns = ["password"]; // columns to hide on response
-    let payload = req.query;
+    let payload = { ...req.params, ...req.query };
     service_view(payload, (err, results) => {
       if (err) {
         return res.json(errorJsonResponse(err));

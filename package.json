@@ -1,19 +1,24 @@
 {
-  "name": "realtime_api",
+  "name": "payment_system",
   "version": "0.0.2",
-  "description": "Express and PostgreSQL Realtime API",
-  "private": false,
+  "description": "Realtime API for Payment System",
+  "private": true,
   "main": "app.js",
   "scripts": {
-    "setup": "node app.js --gensql database.sql --genenv",
+    "setup": "node app.js --gensql assets/database.sql --genenv",
     "dev": "DEBUG=express:* nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js",
-    "start": "NODE_ENV=production node app.js 2>&1 >> ./log/console-\"$(date '+%Y%m%d-%H%M%S')\".log"
+    "start": "DEBUG=express:* NODE_ENV=production node app.js --log 2>&1 | tee ./log/console-\"$(date '+%Y%m%d-%H%M%S')\".log -a -p"
   },
-  "keywords": [],
+  "keywords": [
+    "NodeJs",
+    "Expressjs",
+    "PostgreSQL",
+    "Node-Cache"
+  ],
   "author": {
     "name": "mikesaraus"
   },
-  "license": "ISC",
+  "license": "0BSD",
   "dependencies": {
     "bcrypt": "^5.0.1",
     "compression": "^1.7.4",

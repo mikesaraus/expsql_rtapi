@@ -1,3 +1,5 @@
+"use strict";
+
 require("dotenv").config();
 require("./lib/fn/fn.nodemon");
 require("./lib/prototype/date.prototype");
@@ -27,17 +29,12 @@ const {
 
 process.title = _.npm_package_name || process.title;
 
-// Update Token Key Every Version | Invalidate Old Tokens
-_.TOKEN_KEY += "v" + _.npm_package_version || "";
-_.TOKEN_KEY_PUB += "v" + _.npm_package_version || "";
-
 // Server and Security
-app.set("view cache", true);
 app.use(compression());
-app.use(cors());
-app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
+app.use(helmet());
 app.disable("x-powered-by");
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -53,7 +50,7 @@ app.use((req, res, next) => {
     decodeURIComponent(req.path);
   } catch (err) {
     console.error("URL Format Error", err);
-    return res.status(200).json({
+    return res.json({
       success: 0,
       error: {
         message: "URL Format Error",
@@ -63,7 +60,47 @@ app.use((req, res, next) => {
   next();
 });
 
-console.log(process);
+if (_.npm_lifecycle_event != "setup") console.log(process);
+
+if (process.argv.includes("--log")) {
+  // Console Log
+  const appResSend = app.response.send;
+  app.response.send = function sendOverWrite(body) {
+    appResSend.call(this, body);
+    this.__custombody__ = body;
+  };
+  morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
+  app.use(
+    morgan(
+      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)`
+    )
+  );
+  // HTTP Requests Log
+  app.use(
+    morgan(
+      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
+    :res-body`,
+      {
+        stream: rfs.createStream(
+          () => {
+            const fn = (n) => String(n).padStart(2, 0);
+            const time = new Date();
+            const yearmonth = [
+              time.getUTCFullYear(),
+              fn(time.getUTCMonth() + 1),
+            ].join("");
+            const day = fn(time.getUTCDate());
+            return `${yearmonth}/${yearmonth}${day}-access.log`;
+          },
+          {
+            interval: _.LOG_INTERVAL || "1d",
+            path: path.join(__dirname, "log"),
+          }
+        ),
+      }
+    )
+  );
+}
 
 // Check if Running on Production
 if (!_.NODE_ENV || _.NODE_ENV != "production") {
@@ -74,14 +111,19 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
       process.argv[gensqlid + 1] && !process.argv[gensqlid + 1].startsWith("--")
         ? process.argv[gensqlid + 1]
         : "database.sql";
-    console.log("-".repeat(50));
-    console.log("GEndb", sqloc);
     fs.writeFile(sqloc, generateDatabaseSQL(), "utf-8", (write_err) => {
       console.log("-".repeat(50));
       if (write_err) {
-        console.error("Database failed to generate .sql:", write_err);
+        console.error({
+          status: "Database failed to generate .sql",
+          error: write_err,
+        });
       } else {
-        console.log("Database structure saved on ./database.sql");
+        console.log({
+          status: `Database structure saved on ${sqloc}`,
+          important:
+            "Follow the commands inside .sql file to create database structure",
+        });
       }
       console.log("-".repeat(50));
     });
@@ -104,67 +146,33 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
     });
   }
 } else {
-  // Console Log
-  const appResSend = app.response.send;
-  app.response.send = function sendOverWrite(body) {
-    appResSend.call(this, body);
-    this.__custombody__ = body;
-  };
-  morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
-  app.use(
-    morgan(
-      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)`
-    )
-  );
-  // HTTP/s Requests Log
-  app.use(
-    morgan(
-      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
-    :res-body`,
-      {
-        stream: rfs.createStream(
-          () => {
-            const fn = (n) => String(n).padStart(2, 0);
-            const time = new Date();
-            const yearmonth = [
-              time.getUTCFullYear(),
-              fn(time.getUTCMonth() + 1),
-            ].join("");
-            const day = fn(time.getUTCDate());
-            return `${yearmonth}/${yearmonth}${day}-access.log`;
-          },
-          {
-            interval: _.LOG_INTERVAL || "1d",
-            path: path.join(__dirname, _.LOG_DIR || "log"),
-          }
-        ),
-      }
-    )
-  );
+  // Update Token Key Every Version
+  _.TOKEN_KEY += `v${_.npm_package_version || ""}`;
+  _.TOKEN_KEY_PUB += `v${_.npm_package_version || ""}`;
 }
 
-// Static
+// Static Routes
 app.use("/", express.static("./public"));
 app.use("/test", express.static("./test"));
-app.get("/", (req, res) => {
-  console.log(req.params, req.body, req.query);
-  return res.destroy();
-});
 
-// ### Routers
-const aboutCompany = require("./api/about.company");
-const usersRouter = require("./api/users/user.router");
-const transactionsRouter = require("./api/transactions/trans.router");
-
-// ### Routers Paths
-const notif_help_api = "/api/listeners";
-app.use("/api/about", aboutCompany);
-app.use("/api/user", usersRouter);
-app.use("/api/transaction", transactionsRouter);
+/*
+  API Routes
+*/
+const api_paths = require("./api");
+try {
+  const path_keys = Object.keys(api_paths);
+  path_keys.forEach((_newRoute) => {
+    console.log(`Using /api/${_newRoute}`);
+    app.use(`/api/${_newRoute}`, api_paths[_newRoute]);
+  });
+} catch (e) {
+  console.error(`Error Adding API Path:`, e);
+}
 
 /*
   REALTIME LISTENERS
 */
+const listeners_help_api = "/db/listeners";
 const notif_activities = [
   "added_user",
   "updated_user",
@@ -174,7 +182,7 @@ const notif_activities = [
   "deleted_transaction",
 ];
 
-app.get(notif_help_api, (req, res) => {
+app.get(listeners_help_api, (req, res) => {
   return res.json({
     success: 1,
     listeners: { channel: notif_activities, count: notif_activities.length },
@@ -187,30 +195,22 @@ app.get(notif_help_api, (req, res) => {
 
 // Listen
 notif_activities.forEach((activity) => {
-  pg_client.query("LISTEN " + activity);
+  pg_client.query(`LISTEN ${activity}`);
 });
 
 // REALTIME NOTIFICATIONS
 io.sockets.on("connection", (socket) => {
   // someone successfully connects
   console.log(
-    "[",
-    socket.server.engine.clientsCount,
-    "]",
-    "(" + socket.handshake.address + ")",
-    "is listening for notifications"
+    `[${socket.server.engine.clientsCount}] (${socket.handshake.address}) is listening for notifications`
   );
   // someone disconnects
   socket.on("disconnect", () => {
     console.log(
-      "[ X ] (" + socket.handshake.address + ")",
-      "stopped listening for notifications"
+      `[ X ] (${socket.handshake.address}) stopped listening for notifications`
     );
     console.log(
-      "[",
-      socket.server.engine.clientsCount,
-      "]",
-      "active notification listener"
+      `[${socket.server.engine.clientsCount}] active notification listener`
     );
   });
 
@@ -231,22 +231,14 @@ io.sockets.on("connection", (socket) => {
             detail: "Invalid Token",
           };
           console.log(
-            "[ X ] (" +
-              socket.handshake.address +
-              ") " +
-              errjson.message +
-              " [ " +
-              errjson.detail +
-              " ]"
+            `[ X ] (${socket.handshake.address}) ${errjson.message} [ ${errjson.detail} ]`
           );
           socket.emit("error", errjson);
         } else {
           console.log(
-            "[ / ] (" +
-              socket.handshake.address +
-              " uid=" +
-              (result.data.userid || 0) +
-              ") Ready for Notifications"
+            `[ / ] ( ${socket.handshake.address} uid=${
+              result.data.userid || 0
+            }) Ready for Notifications`
           );
           pg_client.on("notification", (notif) => {
             if (notif) {
@@ -269,25 +261,17 @@ io.sockets.on("connection", (socket) => {
               };
               if (options.channel == notif.channel) {
                 console.log(
-                  "Notification Sent [" +
-                    notif.channel +
-                    "] (" +
-                    socket.handshake.address +
-                    " uid=" +
-                    (result.data.userid || 0) +
-                    "):",
+                  `Notification Sent [${notif.channel}] (${
+                    socket.handshake.address
+                  } uid=${result.data.userid || 0}):`,
                   notif
                 );
                 socket.emit(notif.channel, payload);
               } else if (String(options.channel).toLowerCase() === "all") {
                 console.log(
-                  "Notification Sent [" +
-                    notif.channel +
-                    "] (" +
-                    socket.handshake.address +
-                    " uid=" +
-                    (result.data.userid || 0) +
-                    "):",
+                  `Notification Sent [${notif.channel}] ( ${
+                    socket.handshake.address
+                  } uid=${result.data.userid || 0}):`,
                   notif
                 );
                 socket.emit("notif", payload);
@@ -308,16 +292,10 @@ io.sockets.on("connection", (socket) => {
               : "Channel is Required"
             : "Token is Required"
           : "Token and Channel is Required",
-        help: { url: notif_help_api },
+        help: { url: listeners_help_api },
       };
       console.log(
-        "[ X ] (" +
-          socket.handshake.address +
-          ") " +
-          errjson.message +
-          " [ " +
-          errjson.detail +
-          " ]"
+        `[ X ] (${socket.handshake.address}) ${errjson.message} [ ${errjson.detail} ]`
       );
       socket.emit("error", errjson);
     }
@@ -341,7 +319,8 @@ app.use((err, req, res) => {
 });
 
 if (_.npm_lifecycle_event != "setup")
-  server.listen(_.SRV_MAIN_PORT, () => {
-    if (_.SRV_MAIN_PORT)
-      console.log("Server is up and running on *:" + _.SRV_MAIN_PORT);
+  server.listen(process.env.PORT || _.SRV_MAIN_PORT, () => {
+    console.log(
+      `Server is up and running on *: ${process.env.PORT || _.SRV_MAIN_PORT}`
+    );
   });
