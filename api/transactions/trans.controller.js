@@ -138,6 +138,66 @@ module.exports = {
     });
   },
 
+  viewSummaryNotDeleted: (req, res) => {
+    let hidden_columns = []; // columns to hide on response
+    const data = req.query;
+    data.deleted = data.deleted ? `:is:null~~${data.deleted}` : ":is:null";
+    let payload = data;
+    service_viewSummary(payload, (err, results) => {
+      if (err) {
+        return res.json(errorJsonResponse(err));
+      }
+      let jres = {
+        success: results ? (results.rowCount ? 1 : 0) : 0,
+        data: results ? results.rows[0] : undefined,
+        // response: results,
+      };
+      console.log({
+        command: results ? results.command : "",
+        query: results ? results.query : "",
+        rowCount: results ? results.rowCount : 0,
+        response: jres,
+      });
+      jres.data = hideSomeColumns(
+        hidden_columns,
+        jres.data,
+        Array.isArray(jres.data)
+      );
+      return res.json(jres);
+    });
+  },
+
+  viewSummaryDeleted: (req, res) => {
+    let hidden_columns = []; // columns to hide on response
+    const data = req.query;
+    data.deleted = data.deleted
+      ? `:isnot:null~~${data.deleted}`
+      : ":isnot:null";
+    let payload = data;
+    service_viewSummary(payload, (err, results) => {
+      if (err) {
+        return res.json(errorJsonResponse(err));
+      }
+      let jres = {
+        success: results ? (results.rowCount ? 1 : 0) : 0,
+        data: results ? results.rows[0] : undefined,
+        // response: results,
+      };
+      console.log({
+        command: results ? results.command : "",
+        query: results ? results.query : "",
+        rowCount: results ? results.rowCount : 0,
+        response: jres,
+      });
+      jres.data = hideSomeColumns(
+        hidden_columns,
+        jres.data,
+        Array.isArray(jres.data)
+      );
+      return res.json(jres);
+    });
+  },
+
   viewReport: (req, res) => {
     let hidden_columns = []; // columns to hide on response
     const data = { ...req.params, ...req.query };
@@ -148,7 +208,67 @@ module.exports = {
       }
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
-        data: results ? results.rows[0] : undefined,
+        data: results ? results.rows : undefined,
+        // response: results,
+      };
+      console.log({
+        command: results ? results.command : "",
+        query: results ? results.query : "",
+        rowCount: results ? results.rowCount : 0,
+        response: jres,
+      });
+      jres.data = hideSomeColumns(
+        hidden_columns,
+        jres.data,
+        Array.isArray(jres.data)
+      );
+      return res.json(jres);
+    });
+  },
+
+  viewReportNotDeleted: (req, res) => {
+    let hidden_columns = []; // columns to hide on response
+    const data = { ...req.params, ...req.query };
+    data.deleted = data.deleted ? `:is:null~~${data.deleted}` : ":is:null";
+    let payload = data;
+    service_viewReport(payload, (err, results) => {
+      if (err) {
+        return res.json(errorJsonResponse(err));
+      }
+      let jres = {
+        success: results ? (results.rowCount ? 1 : 0) : 0,
+        data: results ? results.rows : undefined,
+        // response: results,
+      };
+      console.log({
+        command: results ? results.command : "",
+        query: results ? results.query : "",
+        rowCount: results ? results.rowCount : 0,
+        response: jres,
+      });
+      jres.data = hideSomeColumns(
+        hidden_columns,
+        jres.data,
+        Array.isArray(jres.data)
+      );
+      return res.json(jres);
+    });
+  },
+
+  viewReportDeleted: (req, res) => {
+    let hidden_columns = []; // columns to hide on response
+    const data = { ...req.params, ...req.query };
+    data.deleted = data.deleted
+      ? `:isnot:null~~${data.deleted}`
+      : ":isnot:null";
+    let payload = data;
+    service_viewReport(payload, (err, results) => {
+      if (err) {
+        return res.json(errorJsonResponse(err));
+      }
+      let jres = {
+        success: results ? (results.rowCount ? 1 : 0) : 0,
+        data: results ? results.rows : undefined,
         // response: results,
       };
       console.log({

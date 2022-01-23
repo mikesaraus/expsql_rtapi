@@ -7,6 +7,10 @@ const {
   viewNotDeleted,
   updateByParam0,
   deleteActionByParam0,
+  viewReportNotDeleted,
+  viewReportDeleted,
+  viewSummaryNotDeleted,
+  viewSummaryDeleted,
 } = require("./trans.controller");
 
 // Add New Route Here
@@ -25,9 +29,33 @@ module.exports = [
   },
   {
     methods: ["get"],
+    path: "/summary",
+    secure: true,
+    handlers: [viewSummaryNotDeleted],
+  },
+  {
+    methods: ["get"],
+    path: "/report",
+    secure: true,
+    handlers: [viewReportNotDeleted],
+  },
+  {
+    methods: ["get"],
     path: "/deleted",
     secure: true,
     handlers: [viewDeleted],
+  },
+  {
+    methods: ["get"],
+    path: "/deleted/report",
+    secure: true,
+    handlers: [viewReportDeleted],
+  },
+  {
+    methods: ["get"],
+    path: "/deleted/summary",
+    secure: true,
+    handlers: [viewSummaryDeleted],
   },
   {
     methods: ["get"],
@@ -37,13 +65,13 @@ module.exports = [
   },
   {
     methods: ["get"],
-    path: "/summary",
+    path: "/all/summary",
     secure: true,
     handlers: [viewSummary],
   },
   {
     methods: ["get"],
-    path: "/report",
+    path: "/all/report",
     secure: true,
     handlers: [viewReport],
   },
