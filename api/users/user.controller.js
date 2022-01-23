@@ -189,6 +189,48 @@ module.exports = {
     }
   },
 
+  logout: (req, res) => {
+    let hidden_columns = ["password"]; // columns to hide on response
+    let __tokey = Object.keys(req.params)[0];
+    let __toval = req.params[__tokey];
+    const verified = req.headers.verified;
+    if (verified && verified.data && verified.data.userid) {
+      if (!__tokey || !__toval) {
+        __tokey = "userid";
+        __toval = verified.data.userid;
+      }
+      const data = { active_now: "no" };
+      let payload = {
+        __toupdate: {
+          __tokey: __tokey,
+          __toval: __toval,
+        },
+        ...data,
+      };
+      service_updateBySingle(payload, (err, results) => {
+        if (err) {
+          return res.json(errorJsonResponse(err));
+        }
+        let jres = {
+          success: results ? (results.rowCount ? 1 : 0) : 0,
+          data: results ? results.rows[0] || undefined : undefined,
+        };
+        console.log({
+          command: results ? results.command : "",
+          query: results ? results.query : "",
+          rowCount: results ? results.rowCount : 0,
+          response: jres,
+        });
+        jres.data = hideSomeColumns(hidden_columns, jres.data);
+        return res.json(jres);
+      });
+    } else {
+      return res.json(
+        errorJsonResponse({ detail: "Verification error, please try again" })
+      );
+    }
+  },
+
   loginWithPassword: (req, res) => {
     let hidden_columns = ["password"]; // columns to hide on response
     let data = req.body;
@@ -196,9 +238,15 @@ module.exports = {
     __kbody.splice(__kbody.indexOf("password"), 1);
     const __tokey = __kbody[0];
     const __toval = data[__tokey];
-    let payload = {};
-    payload[__tokey] = __toval;
-    service_viewOptions(payload, async (err, results) => {
+    let payload = {
+      __toupdate: {
+        __tokey: __tokey,
+        __toval: __toval,
+      },
+      active_now: "yes",
+      last_login: new Date(),
+    };
+    service_updateBySingle(payload, (err, results) => {
       if (err) {
         return res.json(errorJsonResponse(err));
       }

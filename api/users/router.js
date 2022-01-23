@@ -5,6 +5,7 @@ const {
   deleteActionByParam0,
   loginWithPassword,
   loginViaToken,
+  logout,
 } = require("./user.controller");
 
 // Add New Route Here
@@ -50,6 +51,30 @@ module.exports = [
     path: "/u/:username",
     secure: true,
     handlers: [view],
+  },
+  {
+    methods: ["post"],
+    path: "/logout",
+    secure: true,
+    handlers: [logout],
+  },
+  {
+    methods: ["post"],
+    path: "/:userid/logout",
+    secure: true,
+    handlers: [logout],
+  },
+  {
+    methods: ["post"],
+    path: "/i/:id/logout",
+    secure: true,
+    handlers: [logout],
+  },
+  {
+    methods: ["post"],
+    path: "/u/:username/logout",
+    secure: true,
+    handlers: [logout],
   },
   {
     methods: ["put"],
