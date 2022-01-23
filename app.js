@@ -30,7 +30,7 @@ const {
 
 process.title = _.npm_package_name || process.title;
 
-// Server and Security
+// Some Middlewares
 app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -64,12 +64,12 @@ app.use((req, res, next) => {
 if (_.npm_lifecycle_event.toLowerCase() != "setup") console.log(process);
 
 if (process.argv.includes("--log")) {
-  // Console Log
   const appResSend = app.response.send;
   app.response.send = function sendOverWrite(body) {
     appResSend.call(this, body);
     this.__custombody__ = body;
   };
+  // Console Log
   morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
   app.use(
     morgan(
@@ -108,18 +108,21 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
   // Save DB Structure
   if (process.argv.includes("--gensql")) {
     const gensqlid = process.argv.indexOf("--gensql");
+    const _nextarg = process.argv[gensqlid + 1];
     let sqloc =
-      process.argv[gensqlid + 1] && !process.argv[gensqlid + 1].startsWith("--")
-        ? process.argv[gensqlid + 1]
+      `./` + _nextarg && !_nextarg.startsWith("--")
+        ? _nextarg.endsWith(".sql")
+          ? _nextarg
+          : `${_nextarg}.sql`
         : "database.sql";
     console.log("*".repeat(50));
     if (fs.existsSync(".env") && checkConfig().ok) {
-      const _genDBStat = fs.writeFileSync(
+      const _genDBerror = fs.writeFileSync(
         sqloc,
         generateDatabaseSQL(),
         "utf-8"
       );
-      if (_genDBStat) {
+      if (_genDBerror) {
         console.error({
           status: "Database failed to generate .sql",
           error: write_err,
@@ -132,7 +135,7 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
         });
       }
     } else {
-      fs.rm(sqloc);
+      if (fs.existsSync(sqloc)) fs.rmSync(sqloc);
       console.log({
         status: `Can't generate database structure`,
         important: "Please update .env configuration",
@@ -181,7 +184,7 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup") {
 }
 
 /*
-  REALTIME LISTENERS:::::custom_type_transactions:::::
+  REALTIME LISTENERS
 */
 const listeners_help_api = "/db/listeners";
 const notif_activities = [
