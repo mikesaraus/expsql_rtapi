@@ -26,8 +26,8 @@ module.exports = {
     );
     if (data.username) data.username = data.username.toLowerCase();
     if (
-      blklists.includes(data.username) &&
-      regex_username.test(data.username)
+      blklists.includes(data.username) ||
+      !regex_username.test(data.username)
     ) {
       return res.json(errorJsonResponse(undefined, "Username Not Allowed"));
     }
@@ -149,6 +149,44 @@ module.exports = {
       jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
+  },
+
+  deleteActionByParam0: (req, res) => {
+    let hidden_columns = ["password"]; // columns to hide on response
+    const __tokey = Object.keys(req.params)[0];
+    const __toval = req.params[__tokey];
+    const verified = req.headers.verified;
+    if (verified && verified.data && verified.data.userid) {
+      const data = { status: "deactivated" };
+      let payload = {
+        __toupdate: {
+          __tokey: __tokey,
+          __toval: __toval,
+        },
+        ...data,
+      };
+      service_updateBySingle(payload, (err, results) => {
+        if (err) {
+          return res.json(errorJsonResponse(err));
+        }
+        let jres = {
+          success: results ? (results.rowCount ? 1 : 0) : 0,
+          data: results ? results.rows[0] || undefined : undefined,
+        };
+        console.log({
+          command: results ? results.command : "",
+          query: results ? results.query : "",
+          rowCount: results ? results.rowCount : 0,
+          response: jres,
+        });
+        jres.data = hideSomeColumns(hidden_columns, jres.data);
+        return res.json(jres);
+      });
+    } else {
+      return res.json(
+        errorJsonResponse({ detail: "Verification error, please try again" })
+      );
+    }
   },
 
   loginWithPassword: (req, res) => {

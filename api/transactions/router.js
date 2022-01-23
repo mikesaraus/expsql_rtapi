@@ -1,10 +1,12 @@
 const {
   create,
   view,
-  updateByParam0,
-  deleteByParam0,
-  viewSummary,
   viewReport,
+  viewSummary,
+  viewDeleted,
+  viewNotDeleted,
+  updateByParam0,
+  deleteActionByParam0,
 } = require("./trans.controller");
 
 // Add New Route Here
@@ -18,6 +20,18 @@ module.exports = [
   {
     methods: ["get"],
     path: "/",
+    secure: true,
+    handlers: [viewNotDeleted],
+  },
+  {
+    methods: ["get"],
+    path: "/deleted",
+    secure: true,
+    handlers: [viewDeleted],
+  },
+  {
+    methods: ["get"],
+    path: "/all",
     secure: true,
     handlers: [view],
   },
@@ -85,24 +99,24 @@ module.exports = [
     methods: ["delete"],
     path: "/:trans_id",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
   {
     methods: ["delete"],
     path: "/i/:id",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
   {
     methods: ["delete"],
     path: "/or/:trans_or",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
   {
     methods: ["delete"],
     path: "/ar/:trans_ar",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
 ];

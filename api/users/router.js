@@ -2,7 +2,7 @@ const {
   create,
   view,
   updateByParam0,
-  deleteByParam0,
+  deleteActionByParam0,
   loginWithPassword,
   loginViaToken,
 } = require("./user.controller");
@@ -73,18 +73,18 @@ module.exports = [
     methods: ["delete"],
     path: "/:userid",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
   {
     methods: ["delete"],
     path: "/i/:id",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
   {
     methods: ["delete"],
     path: "/u/:username",
     secure: true,
-    handlers: [deleteByParam0],
+    handlers: [deleteActionByParam0],
   },
 ];

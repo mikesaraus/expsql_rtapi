@@ -22,6 +22,7 @@ const fs = require("fs");
 const _ = process.env;
 const { verifyCBPrivatePublicToken } = require("./auth/token.service");
 const { errorJsonResponse, hideSomeColumns } = require("./lib/fn/fn.db");
+const { checkConfig } = require("./lib/fn/fn.checker");
 const {
   generateDatabaseSQL,
   generateDotEnv,
@@ -60,7 +61,7 @@ app.use((req, res, next) => {
   next();
 });
 
-if (_.npm_lifecycle_event != "setup") console.log(process);
+if (_.npm_lifecycle_event.toLowerCase() != "setup") console.log(process);
 
 if (process.argv.includes("--log")) {
   // Console Log
@@ -111,9 +112,14 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
       process.argv[gensqlid + 1] && !process.argv[gensqlid + 1].startsWith("--")
         ? process.argv[gensqlid + 1]
         : "database.sql";
-    fs.writeFile(sqloc, generateDatabaseSQL(), "utf-8", (write_err) => {
-      console.log("-".repeat(50));
-      if (write_err) {
+    console.log("*".repeat(50));
+    if (fs.existsSync(".env") && checkConfig().ok) {
+      const _genDBStat = fs.writeFileSync(
+        sqloc,
+        generateDatabaseSQL(),
+        "utf-8"
+      );
+      if (_genDBStat) {
         console.error({
           status: "Database failed to generate .sql",
           error: write_err,
@@ -125,25 +131,29 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
             "Follow the commands inside .sql file to create database structure",
         });
       }
-      console.log("-".repeat(50));
-    });
+    } else {
+      fs.rm(sqloc);
+      console.log({
+        status: `Can't generate database structure`,
+        important: "Please update .env configuration",
+      });
+    }
   }
   // Generate dotEnv (.env)
   if (process.argv.includes("--genenv")) {
     const envdir = path.join(__dirname, ".env");
-    fs.writeFile(envdir, generateDotEnv(), "utf-8", (write_err) => {
-      if (write_err) {
-        console.error(write_err);
-      } else {
-        console.log("!".repeat(50));
-        console.log({
-          status: "DotEnv (.env) Saved",
-          important: "Modify .env Configuration",
-        });
-        console.log("!".repeat(50));
-        process.exit(0);
-      }
-    });
+    const _genEnvConf = fs.writeFileSync(envdir, generateDotEnv(), "utf-8");
+    if (_genEnvConf) {
+      console.error(_genEnvConf);
+    } else {
+      console.log("~".repeat(50));
+      console.log({
+        status: "DotEnv (.env) structure generated",
+        important: "Modify .env Configuration",
+      });
+      console.log("~".repeat(50));
+      process.exit(0);
+    }
   }
 } else {
   // Update Token Key Every Version
@@ -158,19 +168,21 @@ app.use("/test", express.static("./test"));
 /*
   API Routes
 */
-const api_paths = require("./api");
-try {
-  const path_keys = Object.keys(api_paths);
-  path_keys.forEach((_newRoute) => {
-    console.log(`Using /api/${_newRoute}`);
-    app.use(`/api/${_newRoute}`, api_paths[_newRoute]);
-  });
-} catch (e) {
-  console.error(`Error Adding API Path:`, e);
+if (_.npm_lifecycle_event.toLowerCase() != "setup") {
+  const api_paths = require("./api");
+  try {
+    const path_keys = Object.keys(api_paths);
+    path_keys.forEach((_newRoute) => {
+      console.log(`Using /api/${_newRoute}`);
+      app.use(`/api/${_newRoute}`, api_paths[_newRoute]);
+    });
+  } catch (e) {
+    console.error(`Error Adding API Path:`, e);
+  }
 }
 
 /*
-  REALTIME LISTENERS
+  REALTIME LISTENERS:::::custom_type_transactions:::::
 */
 const listeners_help_api = "/db/listeners";
 const notif_activities = [
@@ -318,7 +330,7 @@ app.use((err, req, res) => {
   return res.status(500).json(errorJsonResponse(undefined, "Server Error"));
 });
 
-if (_.npm_lifecycle_event != "setup")
+if (_.npm_lifecycle_event.toLowerCase() != "setup")
   server.listen(process.env.PORT || _.SRV_MAIN_PORT, () => {
     console.log(
       `Server is up and running on *: ${process.env.PORT || _.SRV_MAIN_PORT}`
