@@ -163,7 +163,6 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
 
 // Static Routes
 app.use("/", express.static("./public"));
-app.use("/test", express.static("./test"));
 
 /*
   API Routes
