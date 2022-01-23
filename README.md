@@ -18,9 +18,9 @@ cd expsql_rtapi && npm install
 npm run setup
 ```
 
-#### Follow the commands inside .sql file
-
 #### Modify .env configuration
+
+#### Follow the commands inside .sql file
 
 ### Run in Development Mode
 
