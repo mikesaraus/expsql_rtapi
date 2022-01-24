@@ -13,7 +13,7 @@ const {
 } = require("../../lib/fn/fn.db");
 const { regex_username } = require("../../lib/fn/fn.patters");
 const { genSaltSync, hashSync, compareSync } = require("bcrypt");
-const { block_usernames } = require("../../lib/data/blocklists");
+const { block_keywords } = require("../../lib/data/blocklists");
 const {
   signToken,
   verifyCBPrivatePublicToken,
@@ -25,7 +25,7 @@ module.exports = {
     const data = req.body;
     const blklist =
       _.TXT_USERNAME_BLOCK_LIST.replace(/\s/g, "").split(",") || [];
-    let blklists = block_usernames.concat(
+    let blklists = block_keywords.concat(
       blklist.filter((item) => blklist.indexOf(item) < 1)
     );
     if (data.username) data.username = data.username.toLowerCase();
