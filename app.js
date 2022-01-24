@@ -1,7 +1,6 @@
 "use strict";
 
 require("dotenv").config();
-require("./lib/fn/fn.nodemon");
 require("./lib/prototype/date.prototype");
 
 const express = require("express");
@@ -105,6 +104,7 @@ if (process.argv.includes("--log")) {
 
 // Check if Running on Production
 if (!_.NODE_ENV || _.NODE_ENV != "production") {
+  require("./lib/fn/fn.nodemon");
   // Save DB Structure
   if (process.argv.includes("--gensql")) {
     const gensqlid = process.argv.indexOf("--gensql");
@@ -319,7 +319,9 @@ io.sockets.on("connection", (socket) => {
 // Bad Requests
 app.use((req, res) => {
   console.error("Invalid Endpoint:", { url: req.url, method: req.method });
-  return res.status(500).json(errorJsonResponse(undefined, "Invalid Endpoint"));
+  return res
+    .status(500)
+    .json(errorJsonResponse({ detail: "Invalid Endpoint" }));
 });
 
 // Error Response
@@ -329,7 +331,7 @@ app.use((err, req, res) => {
     method: req.method,
     error: err,
   });
-  return res.status(500).json(errorJsonResponse(undefined, "Server Error"));
+  return res.status(500).json(errorJsonResponse({ detail: "Server Error" }));
 });
 
 if (_.npm_lifecycle_event.toLowerCase() != "setup")
