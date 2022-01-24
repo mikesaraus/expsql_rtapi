@@ -53,7 +53,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(hidden_columns, jres.data, true);
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -78,7 +78,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(hidden_columns, jres.data, true);
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -105,7 +105,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(hidden_columns, jres.data, true);
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -129,11 +129,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -158,11 +154,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -189,11 +181,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -217,11 +205,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -246,11 +230,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -277,11 +257,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },

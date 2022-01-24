@@ -36,10 +36,10 @@ module.exports = {
             "(Private Key)"
           );
           return res.json(
-            errorJsonResponse(
-              err,
-              err.expiredAt ? "Token is Expired" : "Invalid Token"
-            )
+            errorJsonResponse({
+              ...err,
+              detail: err.expiredAt ? "Token is Expired" : "Invalid Token",
+            })
           );
         } else {
           req.headers.verified = decoded;
@@ -48,7 +48,7 @@ module.exports = {
         }
       });
     } else {
-      return res.json(errorJsonResponse(undefined, "Access Denied"));
+      return res.json(errorJsonResponse({ detail: "Access Denied" }));
     }
   },
 
@@ -63,10 +63,10 @@ module.exports = {
             "(Public Key)"
           );
           return res.json(
-            errorJsonResponse(
-              err,
-              err.expiredAt ? "Token is Expired" : "Invalid Token"
-            )
+            errorJsonResponse({
+              ...err,
+              detail: err.expiredAt ? "Token is Expired" : "Invalid Token",
+            })
           );
         } else {
           req.headers.verified = decoded;
@@ -78,7 +78,7 @@ module.exports = {
         }
       });
     } else {
-      return res.json(errorJsonResponse(undefined, "Access Denied"));
+      return res.json(errorJsonResponse({ detail: "Access Denied" }));
     }
   },
 
@@ -94,10 +94,10 @@ module.exports = {
                 err.expiredAt ? "Token is Expired" : "Invalid Token"
               );
               return res.json(
-                errorJsonResponse(
-                  err,
-                  err.expiredAt ? "Token is Expired" : "Invalid Token"
-                )
+                errorJsonResponse({
+                  ...err,
+                  detail: err.expiredAt ? "Token is Expired" : "Invalid Token",
+                })
               );
             } else {
               req.headers.verified = decoded;
@@ -120,7 +120,7 @@ module.exports = {
         }
       });
     } else {
-      return res.json(errorJsonResponse(undefined, "Access Denied"));
+      return res.json(errorJsonResponse({ detail: "Access Denied" }));
     }
   },
 

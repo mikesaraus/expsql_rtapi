@@ -6,7 +6,11 @@ const {
   service_updateBySingle,
 } = require("./user.service");
 const _ = process.env;
-const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
+const {
+  hideSomeColumns,
+  errorJsonResponse,
+  testget,
+} = require("../../lib/fn/fn.db");
 const { regex_username } = require("../../lib/fn/fn.patters");
 const { genSaltSync, hashSync, compareSync } = require("bcrypt");
 const { block_usernames } = require("../../lib/data/blocklists");
@@ -29,7 +33,7 @@ module.exports = {
       blklists.includes(data.username) ||
       !regex_username.test(data.username)
     ) {
-      return res.json(errorJsonResponse(undefined, "Username Not Allowed"));
+      return res.json(errorJsonResponse({ detail: "Username Not Allowed" }));
     }
     if (data.password)
       data.password = hashSync(
@@ -77,11 +81,7 @@ module.exports = {
         rowCount: results ? results.rowCount : 0,
         response: jres,
       });
-      jres.data = hideSomeColumns(
-        hidden_columns,
-        jres.data,
-        Array.isArray(jres.data)
-      );
+      jres.data = hideSomeColumns(hidden_columns, jres.data);
       return res.json(jres);
     });
   },
@@ -306,7 +306,10 @@ module.exports = {
       let tokenError;
       verifyCBPrivatePublicToken(token, (err, result) => {
         if (err) {
-          tokenError = errorJsonResponse(err, "Invalid Token");
+          tokenError = errorJsonResponse({
+            ...err,
+            detail: err && err.expiredAt ? "Token is Expired" : "Invalid Token",
+          });
         } else {
           console.log(result);
           result.data = hideSomeColumns(hidden_columns, result.data);
@@ -315,7 +318,7 @@ module.exports = {
       });
       if (tokenError) return res.json(tokenError);
     } else {
-      return res.json(errorJsonResponse(undefined, "Token is Required"));
+      return res.json(errorJsonResponse({ detail: "Token is Required" }));
     }
     if (response && typeof response === "object" && response.success === 1) {
       let hidden_columns = ["password"]; // columns to hide on response
@@ -346,7 +349,7 @@ module.exports = {
         return res.json(jres);
       });
     } else {
-      return res.json(errorJsonResponse(undefined, "Invalid Login"));
+      return res.json(errorJsonResponse({ detail: "Invalid Login" }));
     }
   },
 };
