@@ -3,29 +3,31 @@
 require("dotenv").config();
 require("./lib/prototype/date.prototype");
 
-const express = require("express");
-const app = express();
-const server = require("http").createServer(app);
-const io = require("socket.io")(server);
-const pg_client = require("./config/database");
-
-const compression = require("compression");
-const cors = require("cors");
-const morgan = require("morgan");
-const helmet = require("helmet");
-const bodyParser = require("body-parser");
-const path = require("path");
-const rfs = require("rotating-file-stream");
-const fs = require("fs");
-
-const _ = process.env;
-const { verifyCBPrivatePublicToken } = require("./auth/token.service");
-const { errorJsonResponse, hideSomeColumns } = require("./lib/fn/fn.db");
-const { checkConfig } = require("./lib/fn/fn.checker");
-const {
-  generateDatabaseSQL,
-  generateDotEnv,
-} = require("./lib/fn/fn.generator");
+const _ = process.env,
+  express = require("express"),
+  app = express(),
+  server = require("http").createServer(app),
+  compression = require("compression"),
+  cors = require("cors"),
+  morgan = require("morgan"),
+  helmet = require("helmet"),
+  bodyParser = require("body-parser"),
+  path = require("path"),
+  fs = require("fs"),
+  { verifyCBPrivatePublicToken, verifyToken } = require("./auth/token.service"),
+  { errorJsonResponse, hideSomeColumns } = require("./lib/fn/fn.db"),
+  { checkConfig, checkCors, checkIfObject } = require("./lib/fn/fn.checker"),
+  { generateDatabaseSQL, generateDotEnv } = require("./lib/fn/fn.generator"),
+  corsOptions = {
+    origin: checkCors.appCorsOption,
+    optionsSuccessStatus: 200,
+  },
+  io = require("socket.io")(server, {
+    allowRequest: checkCors.socketAllowRequest,
+    cors: checkCors.socketCorsOptions,
+    credentials: true,
+  }),
+  pg_client = require("./config/database");
 
 process.title = _.npm_package_name || process.title;
 
@@ -33,19 +35,12 @@ process.title = _.npm_package_name || process.title;
 app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(helmet());
 app.disable("x-powered-by");
+
+// Check URL
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src 'self' * 'unsafe-inline' blob: data: gap:; frame-src * 'self' blob: data: gap:;"
-  );
   try {
     decodeURIComponent(req.path);
   } catch (err) {
@@ -62,42 +57,19 @@ app.use((req, res, next) => {
 
 if (_.npm_lifecycle_event.toLowerCase() != "setup") console.log(process);
 
+// Logging
 if (process.argv.includes("--log")) {
   const appResSend = app.response.send;
   app.response.send = function sendOverWrite(body) {
     appResSend.call(this, body);
     this.__custombody__ = body;
   };
-  // Console Log
+  // Console Log All Request and Response
   morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
   app.use(
     morgan(
-      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)`
-    )
-  );
-  // HTTP Requests Log
-  app.use(
-    morgan(
       `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
-    :res-body`,
-      {
-        stream: rfs.createStream(
-          () => {
-            const fn = (n) => String(n).padStart(2, 0);
-            const time = new Date();
-            const yearmonth = [
-              time.getUTCFullYear(),
-              fn(time.getUTCMonth() + 1),
-            ].join("");
-            const day = fn(time.getUTCDate());
-            return `${yearmonth}/${yearmonth}${day}-access.log`;
-          },
-          {
-            interval: _.LOG_INTERVAL || "1d",
-            path: path.join(__dirname, "log"),
-          }
-        ),
-      }
+      :res-body`
     )
   );
 }
@@ -186,20 +158,23 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup") {
 /*
   REALTIME LISTENERS
 */
-const listeners_help_api = "/db/listeners";
-const notif_activities = [
-  "added_user",
-  "updated_user",
-  "deleted_user",
-  "added_transaction",
-  "updated_transaction",
-  "deleted_transaction",
-];
+const listeners_apiPath = "/db/listeners",
+  notif_activities = {
+    user: ["added_user", "updated_user", "deleted_user"],
+    transaction: [
+      "added_transaction",
+      "updated_transaction",
+      "deleted_transaction",
+    ],
+  },
+  notifChannels = checkIfObject(notif_activities)
+    ? Object.values(notif_activities).join().split(",")
+    : notif_activities;
 
-app.get(listeners_help_api, (req, res) => {
+app.get(listeners_apiPath, (req, res) => {
   return res.json({
     success: 1,
-    listeners: { channel: notif_activities, count: notif_activities.length },
+    listeners: { channel: notifChannels, count: notifChannels.length },
     required: {
       token: true,
       channel: true,
@@ -207,8 +182,29 @@ app.get(listeners_help_api, (req, res) => {
   });
 });
 
+app.post(listeners_apiPath, verifyToken, (req, res) => {
+  let data = req.body;
+  if (data.to) {
+    data.from =
+      req.headers.verified &&
+      req.headers.verified.data &&
+      req.headers.verified.data.userid
+        ? req.headers.verified.data.userid
+        : req.headers.verified;
+    if (!isNaN(data.from)) data.from = Number(data.from);
+    if (!isNaN(data.to)) data.to = Number(data.to);
+    pg_client.emit("message", data);
+    res.json({
+      success: 1,
+      data: { message: "Payload sent", payload: data },
+    });
+  } else {
+    res.json(errorJsonResponse({ detail: "Missing Payload Destination (to)" }));
+  }
+});
+
 // Listen
-notif_activities.forEach((activity) => {
+notifChannels.forEach((activity) => {
   pg_client.query(`LISTEN ${activity}`);
 });
 
@@ -231,12 +227,11 @@ io.sockets.on("connection", (socket) => {
   socket.emit("connected", { success: 1 });
 
   socket.on("RealtimeUpdates", (options) => {
-    if (
-      options &&
-      typeof options === "object" &&
-      options.channel &&
-      options.token
-    ) {
+    validateSocketToken(options);
+  });
+
+  async function validateSocketToken(options) {
+    if (options && checkIfObject(options) && options.token) {
       verifyCBPrivatePublicToken(options.token, (err, result) => {
         let hidden_columns = ["password"];
         if (err) {
@@ -251,47 +246,46 @@ io.sockets.on("connection", (socket) => {
         } else {
           console.log(
             `[ / ] ( ${socket.handshake.address} uid=${
-              result.data.userid || 0
+              result && result.data ? result.data.userid || 0 : 0
             }) Ready for Notifications`
           );
+          // Personal Notifications
+          pg_client.on("message", (message) => {
+            socket.emit(message.to == "all" ? "message" : message.to, message);
+          });
+          // Database Notifications
           pg_client.on("notification", (notif) => {
-            if (notif) {
-              const pl = JSON.parse(notif.payload);
+            if (notif && checkIfObject(notif.payload))
+              notif.payload = JSON.stringify(notif.payload);
+            const pl = JSON.parse(notif.payload);
+            if (notif && pl) {
               let payload = {
                 channel: notif.channel,
                 when: pl.when,
                 operation: pl.operation,
                 args: pl.args,
-                record: hideSomeColumns(
-                  hidden_columns,
-                  pl.record,
-                  Array.isArray(pl.record)
-                ),
-                record_old: hideSomeColumns(
-                  hidden_columns,
-                  pl.record_old,
-                  Array.isArray(pl.record)
-                ),
+                record: hideSomeColumns(hidden_columns, pl.record),
+                record_old: hideSomeColumns(hidden_columns, pl.record_old),
               };
-              if (options.channel == notif.channel) {
-                console.log(
-                  `Notification Sent [${notif.channel}] (${
-                    socket.handshake.address
-                  } uid=${result.data.userid || 0}):`,
-                  notif
-                );
-                socket.emit(notif.channel, payload);
-              } else if (String(options.channel).toLowerCase() === "all") {
-                console.log(
-                  `Notification Sent [${notif.channel}] ( ${
-                    socket.handshake.address
-                  } uid=${result.data.userid || 0}):`,
-                  notif
-                );
-                socket.emit("notif", payload);
-              }
+
+              Object.keys(notif_activities).forEach((_nk) => {
+                if (notif.channel.includes(`_${_nk}`)) {
+                  payload.channel = String(payload.channel)
+                    .replace(`_${_nk}`, "")
+                    .toLowerCase();
+                  socket.emit(`${_nk}_notif`, payload);
+                }
+              });
+
+              // Listen to all via notif
+              socket.emit("notif", payload);
+
+              console.log(
+                `Notification [${notif.channel}] (${socket.handshake.address}):`,
+                notif
+              );
             } else {
-              console.log("Received Empty Notification");
+              console.log("UNKNOWN: Received Notification", notif);
             }
           });
         }
@@ -301,19 +295,17 @@ io.sockets.on("connection", (socket) => {
         message: "Notifications Disabled",
         detail: options
           ? options.token
-            ? options.channel
-              ? "Unknown Error"
-              : "Channel is Required"
+            ? "Unknown Error"
             : "Token is Required"
-          : "Token and Channel is Required",
-        help: { url: listeners_help_api },
+          : "Options is Required",
+        help: { url: listeners_apiPath },
       };
       console.log(
         `[ X ] (${socket.handshake.address}) ${errjson.message} [ ${errjson.detail} ]`
       );
       socket.emit("error", errjson);
     }
-  });
+  }
 });
 
 // Bad Requests
@@ -336,7 +328,9 @@ app.use((err, req, res) => {
 
 if (_.npm_lifecycle_event.toLowerCase() != "setup")
   server.listen(process.env.PORT || _.SRV_MAIN_PORT, () => {
+    console.log("#".repeat(50));
     console.log(
       `Server is up and running on *: ${process.env.PORT || _.SRV_MAIN_PORT}`
     );
+    console.log("#".repeat(50));
   });

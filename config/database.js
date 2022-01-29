@@ -2,11 +2,11 @@ const _ = process.env;
 const pg = require("pg");
 
 let db_config = {
-  host: _.DB_HOST || "localhost",
-  database: _.DB_NAME || "database",
-  port: _.DB_PORT || 5432,
-  user: _.DB_USER || "user",
-  password: _.DB_PWD || "password",
+  host: _.DB_HOST,
+  database: _.DB_NAME,
+  port: _.DB_PORT,
+  user: _.DB_USER,
+  password: _.DB_PWD,
 };
 
 let pg_client = new pg.Client(db_config);

@@ -6,14 +6,15 @@ const {
   service_updateBySingle,
 } = require("./user.service");
 const _ = process.env;
+const { regex_username } = require("../../lib/fn/fn.patters");
+const { compareSync } = require("bcrypt");
+const { block_keywords } = require("../../lib/data/blocklists");
+const { encryptPassword, base64 } = require("../../lib/fn/fn.generator");
 const {
   hideSomeColumns,
   errorJsonResponse,
   testget,
 } = require("../../lib/fn/fn.db");
-const { regex_username } = require("../../lib/fn/fn.patters");
-const { genSaltSync, hashSync, compareSync } = require("bcrypt");
-const { block_keywords } = require("../../lib/data/blocklists");
 const {
   signToken,
   verifyCBPrivatePublicToken,
@@ -23,8 +24,9 @@ module.exports = {
   create: (req, res) => {
     let hidden_columns = ["password"]; // columns to hide on response
     const data = req.body;
-    const blklist =
-      _.TXT_USERNAME_BLOCK_LIST.replace(/\s/g, "").split(",") || [];
+    const blklist = _.TXT_USERNAME_BLOCK_LIST
+      ? _.TXT_USERNAME_BLOCK_LIST.replace(/\s/g, "").split(",") || []
+      : [];
     let blklists = block_keywords.concat(
       blklist.filter((item) => blklist.indexOf(item) < 1)
     );
@@ -36,9 +38,12 @@ module.exports = {
       return res.json(errorJsonResponse({ detail: "Username Not Allowed" }));
     }
     if (data.password)
-      data.password = hashSync(
-        data.password,
-        genSaltSync(parseInt(_.TOKEN_SALT_DEG || 10))
+      data.password = encryptPassword(data.password, {
+        encoded: !_.NODE_ENV || _.NODE_ENV != "production" ? false : true,
+      });
+    if (!data.password)
+      return res.json(
+        errorJsonResponse({ detail: "Invalid Base64 Encoded Password" })
       );
     let payload = data;
     service_create(payload, (err, results) => {
@@ -92,9 +97,12 @@ module.exports = {
     const __toval = req.params[__tokey];
     const data = req.body;
     if (data.password)
-      data.password = hashSync(
-        data.password,
-        genSaltSync(parseInt(_.TOKEN_SALT_DEG || 10))
+      data.password = encryptPassword(data.password, {
+        encoded: !_.NODE_ENV || _.NODE_ENV != "production" ? false : true,
+      });
+    if (!data.password)
+      return res.json(
+        errorJsonResponse({ detail: "Invalid Base64 Encoded Password" })
       );
     let payload = {
       __toupdate: {
@@ -246,51 +254,105 @@ module.exports = {
       active_now: "yes",
       last_login: new Date(),
     };
-    service_updateBySingle(payload, (err, results) => {
-      if (err) {
-        return res.json(errorJsonResponse(err));
-      }
-      const checkpwd = compareSync(
-        data.password || "",
-        results ? (results.rowCount ? results.rows[0].password : "") : ""
-      );
-      let jres = {
-        success: results ? (results.rowCount ? (checkpwd ? 1 : 0) : 0) : 0,
-        token: undefined,
-        data: results
-          ? results.rowCount
-            ? checkpwd
-              ? results.rows[0]
-              : undefined
-            : undefined
-          : undefined,
-        // response: results,
-      };
-      if (jres.success) {
-        jres.token = signToken(jres.data);
+    let _usr = {};
+    _usr[payload.__toupdate.__tokey] = payload.__toupdate.__toval;
+    service_view(_usr, (v_err, v_results) => {
+      if (v_err) {
+        return res.json(errorJsonResponse(v_err));
+      } else if (v_results && v_results.rowCount) {
+        data.password =
+          !_.NODE_ENV || _.NODE_ENV != "production"
+            ? data.password
+            : base64.decode(data.password);
+        const checkpwd = compareSync(
+          data.password || "",
+          v_results
+            ? v_results.rowCount
+              ? v_results.rows[0].password
+              : ""
+            : ""
+        );
+        if (checkpwd) {
+          service_updateBySingle(payload, (err, results) => {
+            if (err) {
+              return res.json(errorJsonResponse(err));
+            }
+            let jres = {
+              success: results
+                ? results.rowCount
+                  ? checkpwd
+                    ? 1
+                    : 0
+                  : 0
+                : 0,
+              token: undefined,
+              data: results
+                ? results.rowCount
+                  ? checkpwd
+                    ? results.rows[0]
+                    : undefined
+                  : undefined
+                : undefined,
+              // response: results,
+            };
+            if (jres.success) {
+              jres.token = signToken(jres.data);
+            } else {
+              jres.error = {
+                message: results
+                  ? results.rowCount
+                    ? checkpwd
+                      ? "Login Successful"
+                      : data.password
+                      ? "Invalid Password"
+                      : "Provide a Password"
+                    : data.password
+                    ? "Invalid User"
+                    : "Password is Required"
+                  : "Invalid Login",
+              };
+            }
+            console.log({
+              command: results ? results.command : "",
+              query: results ? results.query : "",
+              rowCount: results ? results.rowCount : 0,
+              response: jres,
+            });
+            jres.data = hideSomeColumns(hidden_columns, jres.data);
+            return res.json(jres);
+          });
+        } else {
+          let jres = {
+            success: 0,
+            error: {
+              message: data.pass ? "Password is Required" : "Invalid Password",
+              // response: v_results,
+            },
+          };
+          console.log({
+            command: v_results ? v_results.command : "",
+            query: v_results ? v_results.query : "",
+            rowCount: v_results ? v_results.rowCount : 0,
+            response: jres,
+          });
+          return res.json(jres);
+        }
       } else {
-        jres.error = {
-          message: results
-            ? results.rowCount
-              ? checkpwd
-                ? "Login Successful"
-                : data.password
-                ? "Invalid Password"
-                : "Provide a Password"
-              : data.password
-              ? "Invalid User"
-              : "Password is Required"
-            : "Invalid Login",
+        let jres = {
+          success: 0,
+          error: {
+            message: "Invalid User",
+            // response: v_results,
+          },
         };
+        console.log({
+          command: v_results ? v_results.command : "",
+          query: v_results ? v_results.query : "",
+          rowCount: v_results ? v_results.rowCount : 0,
+          response: jres,
+        });
+        return res.json(jres);
       }
-      console.log({
-        command: results ? results.command : "",
-        query: results ? results.query : "",
-        rowCount: results ? results.rowCount : 0,
-        response: jres,
-      });
-      jres.data = hideSomeColumns(hidden_columns, jres.data);
-      return res.json(jres);
     });
   },
 
