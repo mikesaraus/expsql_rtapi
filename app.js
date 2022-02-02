@@ -193,6 +193,7 @@ app.post(listeners_apiPath, verifyToken, (req, res) => {
         : req.headers.verified;
     if (!isNaN(data.from)) data.from = Number(data.from);
     if (!isNaN(data.to)) data.to = Number(data.to);
+    data.date = new Date();
     pg_client.emit("message", data);
     res.json({
       success: 1,
@@ -252,6 +253,11 @@ io.sockets.on("connection", (socket) => {
           // Personal Notifications
           pg_client.on("message", (message) => {
             socket.emit(message.to == "all" ? "message" : message.to, message);
+            if (socket.connected)
+              console.log(
+                `Custom Notification (${socket.handshake.address}):`,
+                message
+              );
           });
           // Database Notifications
           pg_client.on("notification", (notif) => {
@@ -279,13 +285,13 @@ io.sockets.on("connection", (socket) => {
 
               // Listen to all via notif
               socket.emit("notif", payload);
-
-              console.log(
-                `Notification [${notif.channel}] (${socket.handshake.address}):`,
-                notif
-              );
+              if (socket.connected)
+                console.log(
+                  `Database Notification [${notif.channel}] (${socket.handshake.address}):`,
+                  notif
+                );
             } else {
-              console.log("UNKNOWN: Received Notification", notif);
+              console.log("UNKNOWN: Notification Received", notif);
             }
           });
         }
@@ -330,7 +336,7 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup")
   server.listen(process.env.PORT || _.SRV_MAIN_PORT, () => {
     console.log("#".repeat(50));
     console.log(
-      `Server is up and running on *: ${process.env.PORT || _.SRV_MAIN_PORT}`
+      `Server is up and running on *:${process.env.PORT || _.SRV_MAIN_PORT}`
     );
     console.log("#".repeat(50));
   });

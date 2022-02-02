@@ -18,7 +18,7 @@ module.exports = {
       "branch_location",
       "paymethod",
       "channel",
-      "amount_payed",
+      "amount_paid",
       "amount_received",
     ]; // required keys to add as column
     data.trans_id = generateTransactionID();
@@ -143,16 +143,16 @@ module.exports = {
   service_viewSummary: (data, callBack) => {
     let __colsData = dbTables[table].columns;
     let _selections_count = [
-      `COUNT(amount_payed) as count_overall`,
-      `COALESCE(SUM(CASE WHEN TO_CHAR(date_payed,'YYYY')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY') THEN 1 ELSE 0 END),0) as count_thisyear`,
-      `COALESCE(SUM(CASE WHEN TO_CHAR(date_payed,'YYYY-MM')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM') THEN 1 ELSE 0 END),0) as count_thismonth`,
-      `COALESCE(SUM(CASE WHEN TO_CHAR(date_payed, 'YYYY-MM-DD')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM-DD') THEN 1 ELSE 0 END),0) as count_thisday`,
+      `COUNT(amount_paid) as count_overall`,
+      `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid,'YYYY')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY') THEN 1 ELSE 0 END),0) as count_thisyear`,
+      `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid,'YYYY-MM')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM') THEN 1 ELSE 0 END),0) as count_thismonth`,
+      `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid, 'YYYY-MM-DD')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM-DD') THEN 1 ELSE 0 END),0) as count_thisday`,
     ];
     let _selections_total = [
-      `COALESCE(SUM(amount_payed),0) as total_overall`,
-      `COALESCE(SUM(CASE WHEN TO_CHAR(date_payed,'YYYY')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY') THEN amount_payed ELSE 0 END),0) as total_thisyear`,
-      `COALESCE(SUM(CASE WHEN TO_CHAR(date_payed,'YYYY-MM')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM') THEN amount_payed ELSE 0 END),0) as total_thismonth`,
-      `COALESCE(SUM(CASE WHEN TO_CHAR(date_payed, 'YYYY-MM-DD')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM-DD') THEN amount_payed ELSE 0 END),0) as total_thisday`,
+      `COALESCE(SUM(amount_paid),0) as total_overall`,
+      `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid,'YYYY')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY') THEN amount_paid ELSE 0 END),0) as total_thisyear`,
+      `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid,'YYYY-MM')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM') THEN amount_paid ELSE 0 END),0) as total_thismonth`,
+      `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid, 'YYYY-MM-DD')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY-MM-DD') THEN amount_paid ELSE 0 END),0) as total_thisday`,
     ];
     const _channels = ["OverTheCounter", "Internet", "Mobile", "ATM", "Phone"];
     _channels.forEach((channel) => {
@@ -163,7 +163,7 @@ module.exports = {
         )}`
       );
       _selections_total.push(
-        `COALESCE(SUM(CASE WHEN channel='${channel}' THEN amount_payed ELSE 0 END), 0) as total_channel_${channel.replaceAll(
+        `COALESCE(SUM(CASE WHEN channel='${channel}' THEN amount_paid ELSE 0 END), 0) as total_channel_${channel.replaceAll(
           ".",
           ""
         )}`
@@ -178,7 +178,7 @@ module.exports = {
         )}`
       );
       _selections_total.push(
-        `COALESCE(SUM(CASE WHEN channel_online='${channel}' THEN amount_payed ELSE 0 END), 0) as total_online_${channel.replaceAll(
+        `COALESCE(SUM(CASE WHEN channel_online='${channel}' THEN amount_paid ELSE 0 END), 0) as total_online_${channel.replaceAll(
           ".",
           ""
         )}`
@@ -193,7 +193,7 @@ module.exports = {
         )}`
       );
       _selections_total.push(
-        `COALESCE(SUM(CASE WHEN paymethod='${paymod}' THEN amount_payed ELSE 0 END), 0) as total_paymethod_${paymod.replaceAll(
+        `COALESCE(SUM(CASE WHEN paymethod='${paymod}' THEN amount_paid ELSE 0 END), 0) as total_paymethod_${paymod.replaceAll(
           ".",
           ""
         )}`
@@ -274,7 +274,7 @@ module.exports = {
     let columns = data.groupby ? data.groupby.split("||") : ["branch_location"];
     data.groupby = columns.join("||");
     let pg_query = `SELECT ${columns.join(", ")}`;
-    let _algo_sum = data.sum ? data.sum.split("||") : ["amount_payed"];
+    let _algo_sum = data.sum ? data.sum.split("||") : ["amount_paid"];
     let _algo_count = data.count ? data.count.split("||") : ["trans_id"];
     _algo_sum.forEach((_algo) => {
       pg_query += `, SUM(${_algo})::numeric AS sum_${_algo}`;

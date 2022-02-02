@@ -41,10 +41,6 @@ module.exports = {
       data.password = encryptPassword(data.password, {
         encoded: !_.NODE_ENV || _.NODE_ENV != "production" ? false : true,
       });
-    if (!data.password)
-      return res.json(
-        errorJsonResponse({ detail: "Invalid Base64 Encoded Password" })
-      );
     let payload = data;
     service_create(payload, (err, results) => {
       if (err) {
@@ -54,7 +50,6 @@ module.exports = {
         success: 1,
         token: undefined,
         data: results ? results.rows[0] || [] : [],
-        // response: results,
       };
       jres.token = signToken(jres.data);
       console.log({
@@ -78,7 +73,6 @@ module.exports = {
       let jres = {
         success: 1,
         data: results ? (results.rowCount ? results.rows : []) : [],
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -100,10 +94,6 @@ module.exports = {
       data.password = encryptPassword(data.password, {
         encoded: !_.NODE_ENV || _.NODE_ENV != "production" ? false : true,
       });
-    if (!data.password)
-      return res.json(
-        errorJsonResponse({ detail: "Invalid Base64 Encoded Password" })
-      );
     let payload = {
       __toupdate: {
         __tokey: __tokey,
@@ -146,7 +136,6 @@ module.exports = {
       }
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -293,7 +282,6 @@ module.exports = {
                     : undefined
                   : undefined
                 : undefined,
-              // response: results,
             };
             if (jres.success) {
               jres.token = signToken(jres.data);
@@ -399,7 +387,6 @@ module.exports = {
           pkey: response.pkey,
           iat: response.iat * 1000 || undefined,
           exp: response.exp * 1000 || undefined,
-          // response: results,
         };
         console.log({
           command: results ? results.command : "",

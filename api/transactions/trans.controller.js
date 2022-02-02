@@ -21,7 +21,6 @@ module.exports = {
       let jres = {
         success: 1,
         data: results ? results.rows[0] || [] : [],
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -45,7 +44,6 @@ module.exports = {
       let jres = {
         success: 1,
         data: results ? results.rows || [] : [],
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -70,7 +68,6 @@ module.exports = {
       let jres = {
         success: 1,
         data: results ? results.rows || [] : [],
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -97,7 +94,6 @@ module.exports = {
       let jres = {
         success: 1,
         data: results ? results.rows || [] : [],
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -121,7 +117,6 @@ module.exports = {
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
         data: results ? results.rows[0] : undefined,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -146,7 +141,6 @@ module.exports = {
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
         data: results ? results.rows[0] : undefined,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -173,7 +167,6 @@ module.exports = {
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
         data: results ? results.rows[0] : undefined,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -197,7 +190,6 @@ module.exports = {
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
         data: results ? results.rows : undefined,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -222,7 +214,6 @@ module.exports = {
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
         data: results ? results.rows : undefined,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -249,7 +240,6 @@ module.exports = {
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
         data: results ? results.rows : undefined,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
@@ -309,7 +299,6 @@ module.exports = {
       }
       let jres = {
         success: results ? (results.rowCount ? 1 : 0) : 0,
-        // response: results,
       };
       console.log({
         command: results ? results.command : "",
