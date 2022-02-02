@@ -11,8 +11,6 @@ module.exports = {
     let noncol = data.__noncol || []; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
     let important = data.__important || [
-      "trans_or",
-      "trans_ar",
       "account_id",
       "receiver_id",
       "branch_location",
@@ -21,6 +19,7 @@ module.exports = {
       "amount_paid",
       "amount_received",
     ]; // required keys to add as column
+    console.log("++++++++++++++++++++++++", data);
     data.trans_id = generateTransactionID();
     let cols = Object.keys(data);
     let missingData = [];
@@ -76,11 +75,8 @@ module.exports = {
   service_updateBySingle: (data, callBack) => {
     let noncol = data.__noncol || [
       "id",
-      "userid",
-      "username",
+      "receiver_id",
       "trans_id",
-      "trans_or",
-      "trans_ar",
       "__important",
       "__toupdate",
       "__options",
