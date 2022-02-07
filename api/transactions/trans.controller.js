@@ -8,12 +8,24 @@ const {
 } = require("./trans.service");
 const _ = process.env;
 const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
+const { block_keywords } = require("../../lib/data/blocklists");
 
 module.exports = {
   create: (req, res) => {
     let hidden_columns = []; // columns to hide on response
     const data = req.body;
     let payload = data;
+    const blklist = _.TXT_USERNAME_BLOCK_LIST
+      ? _.TXT_USERNAME_BLOCK_LIST.replace(/\s/g, "").split(",") || []
+      : [];
+    let blklists = block_keywords.concat(
+      blklist.filter((item) => blklist.indexOf(item) < 1)
+    );
+    if (blklists.includes(data.account_name)) {
+      return res.json(
+        errorJsonResponse({ detail: "Account Name Not Allowed" })
+      );
+    }
     service_create(payload, (err, results) => {
       if (err) {
         return res.json(errorJsonResponse(err));
