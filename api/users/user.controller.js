@@ -37,10 +37,7 @@ module.exports = {
     ) {
       return res.json(errorJsonResponse({ detail: "Username Not Allowed" }));
     }
-    if (data.password)
-      data.password = encryptPassword(data.password, {
-        encoded: !_.NODE_ENV || _.NODE_ENV != "production" ? false : true,
-      });
+    if (data.password) data.password = encryptPassword(data.passwor);
     let payload = data;
     service_create(payload, (err, results) => {
       if (err) {
@@ -90,10 +87,7 @@ module.exports = {
     const __tokey = Object.keys(req.params)[0];
     const __toval = req.params[__tokey];
     const data = req.body;
-    if (data.password)
-      data.password = encryptPassword(data.password, {
-        encoded: !_.NODE_ENV || _.NODE_ENV != "production" ? false : true,
-      });
+    if (data.password) data.password = encryptPassword(data.password);
     let payload = {
       __toupdate: {
         __tokey: __tokey,
@@ -249,10 +243,7 @@ module.exports = {
       if (v_err) {
         return res.json(errorJsonResponse(v_err));
       } else if (v_results && v_results.rowCount) {
-        data.password =
-          !_.NODE_ENV || _.NODE_ENV != "production"
-            ? data.password
-            : base64.decode(data.password);
+        data.password = base64.decode(data.password);
         const checkpwd = compareSync(
           data.password || "",
           v_results
