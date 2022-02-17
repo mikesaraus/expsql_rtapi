@@ -6,19 +6,17 @@ const {
   service_updateBySingle,
 } = require("./user.service");
 const _ = process.env;
+const { service_upload } = require("../../lib/upload");
 const { regex_username } = require("../../lib/fn/fn.patters");
 const { compareSync } = require("bcrypt");
 const { block_keywords } = require("../../lib/data/blocklists");
 const { encryptPassword, base64 } = require("../../lib/fn/fn.generator");
-const {
-  hideSomeColumns,
-  errorJsonResponse,
-  testget,
-} = require("../../lib/fn/fn.db");
+const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
 const {
   signToken,
   verifyCBPrivatePublicToken,
 } = require("../../auth/token.service");
+const getObj = require("lodash.get");
 
 module.exports = {
   create: (req, res) => {
@@ -37,7 +35,7 @@ module.exports = {
     ) {
       return res.json(errorJsonResponse({ detail: "Username Not Allowed" }));
     }
-    if (data.password) data.password = encryptPassword(data.passwor);
+    if (data.password) data.password = encryptPassword(data.password);
     let payload = data;
     service_create(payload, (err, results) => {
       if (err) {
@@ -114,6 +112,56 @@ module.exports = {
     });
   },
 
+  uploadProfilePicture: (req, res) => {
+    const data = req.params;
+    const verified = req.headers.verified;
+    if (getObj(verified, "data.userid") && data.userid) {
+      if (
+        verified.data.userid === data.userid ||
+        String(verified.data.position).toLowerCase().includes("admin")
+      ) {
+        const upload_path = `profile/${verified.data.userid}`;
+        service_upload(
+          req,
+          upload_path,
+          (err, fields, files) => {
+            if (err) return res.status(500).json(errorJsonResponse(err));
+            let error_files = {},
+              success_files = {};
+            if (files) {
+              const file_names = Object.keys(files);
+              file_names.forEach((fn) => {
+                if (files[fn].ok) success_files[fn] = files[fn];
+                else error_files[fn] = files[fn];
+              });
+            }
+
+            let jres = {
+              success: Object.keys(error_files).length ? 0 : 1,
+              data: {
+                error: error_files,
+                uploaded: success_files,
+              },
+            };
+            console.log("Fields:", fields);
+            console.log(jres);
+            return res.status(jres.success ? 200 : 200).json(jres);
+          },
+          {
+            keep_extention: true,
+            keep_filename: false,
+            create_dir_ifnot_exist: true,
+            allowed_ext: ["jpeg", "jpg", "png"],
+          }
+        );
+      } else {
+        return res.json(errorJsonResponse({ detail: "Permission Denied!" }));
+      }
+    } else {
+      return res.json(errorJsonResponse({ detail: "Invalid user!" }));
+    }
+  },
+
   deleteByParam0: (req, res) => {
     let hidden_columns = []; // columns to hide on response
     const __tokey = Object.keys(req.params)[0];
@@ -147,7 +195,7 @@ module.exports = {
     const __tokey = Object.keys(req.params)[0];
     const __toval = req.params[__tokey];
     const verified = req.headers.verified;
-    if (verified && verified.data && verified.data.userid) {
+    if (getObj(verified, "data.userid")) {
       const data = { status: "deactivated" };
       let payload = {
         __toupdate: {
@@ -185,7 +233,7 @@ module.exports = {
     let __tokey = Object.keys(req.params)[0];
     let __toval = req.params[__tokey];
     const verified = req.headers.verified;
-    if (verified && verified.data && verified.data.userid) {
+    if (getObj(verified, "data.userid")) {
       if (!__tokey || !__toval) {
         __tokey = "userid";
         __toval = verified.data.userid;
@@ -350,6 +398,7 @@ module.exports = {
           tokenError = errorJsonResponse({
             ...err,
             detail: err && err.expiredAt ? "Token is Expired" : "Invalid Token",
+            code: -1,
           });
         } else {
           console.log(result);

@@ -39,6 +39,7 @@ module.exports = {
             errorJsonResponse({
               ...err,
               detail: err.expiredAt ? "Token is Expired" : "Invalid Token",
+              code: -1,
             })
           );
         } else {

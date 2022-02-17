@@ -1,6 +1,8 @@
 // Add New Path Here
 module.exports = {
-  about: require("./about"),
+  server: require("./server"),
+  company: require("./company"),
   transaction: require("./transactions"),
   user: require("./users"),
+  receipt: require("./receipt"),
 };

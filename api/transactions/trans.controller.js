@@ -9,6 +9,7 @@ const {
 const _ = process.env;
 const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
 const { block_keywords } = require("../../lib/data/blocklists");
+const getObj = require("lodash.get");
 
 module.exports = {
   create: (req, res) => {
@@ -328,7 +329,7 @@ module.exports = {
     const __tokey = Object.keys(req.params)[0];
     const __toval = req.params[__tokey];
     const verified = req.headers.verified;
-    if (verified && verified.data && verified.data.userid) {
+    if (getObj(verified, "data.userid")) {
       const data = { deleted: new Date(), updated_by: verified.data.userid };
       let payload = {
         __toupdate: {

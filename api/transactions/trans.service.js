@@ -4,11 +4,11 @@ const { dbTables } = require("../../lib/data/db.structures");
 const { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db");
 const { generateTransactionID } = require("../../lib/fn/fn.generator");
 // db table
-const table = _.DB_TBL_TRANSACTIONS;
+const table = _.DBTBL_TRANSACTIONS;
 
 module.exports = {
   service_create: (data, callBack) => {
-    let noncol = data.__noncol || []; // keys not to include as columns
+    let noncol = data.__noncol || ["trans_id"]; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
     let important = data.__important || [
       "account_id",
@@ -19,8 +19,6 @@ module.exports = {
       "amount_paid",
       "amount_received",
     ]; // required keys to add as column
-    console.log("++++++++++++++++++++++++", data);
-    data.trans_id = generateTransactionID();
     let cols = Object.keys(data);
     let missingData = [];
     important.forEach((col) => {
@@ -33,7 +31,7 @@ module.exports = {
         if (cols.includes(key)) cols.splice(cols.indexOf(key), 1);
       });
     let pg_setvals = [];
-    let pg_query = `INSERT INTO ${table} (${cols}) VALUES(`;
+    let pg_query = `INSERT INTO ${table} (trans_id, ${cols}) VALUES(${generateTransactionID()},`;
     for (var i = 1; i <= cols.length; i++) {
       pg_query += `$` + i;
       if (i != cols.length) pg_query += `, `;
@@ -82,7 +80,7 @@ module.exports = {
       "__options",
     ]; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
-    let important = data.__important || ["__toupdate"]; // ["id", "userid", "username"] required keys to add as column
+    let important = data.__important || ["__toupdate"]; // required keys to add as column
     let cols = Object.keys(data);
     let missingData = [];
     important.forEach((col) => {

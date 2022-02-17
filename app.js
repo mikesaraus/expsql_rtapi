@@ -13,9 +13,16 @@ const _ = process.env,
   helmet = require("helmet"),
   bodyParser = require("body-parser"),
   path = require("path"),
-  fs = require("fs"),
+  { createStream } = require("rotating-file-stream"),
+  { logFilenameFormat } = require("./lib/fn/fn.format"),
+  { throttle, decodeURL } = require("./lib/middleware"),
+  { existsSync, rmSync, writeFileSync } = require("fs"),
   { verifyCBPrivatePublicToken, verifyToken } = require("./auth/token.service"),
-  { errorJsonResponse, hideSomeColumns } = require("./lib/fn/fn.db"),
+  {
+    errorJsonResponse,
+    hideSomeColumns,
+    availableTables,
+  } = require("./lib/fn/fn.db"),
   { checkConfig, checkCors, checkIfObject } = require("./lib/fn/fn.checker"),
   { generateDatabaseSQL, generateDotEnv } = require("./lib/fn/fn.generator"),
   corsOptions = {
@@ -32,46 +39,60 @@ const _ = process.env,
 process.title = _.npm_package_name || process.title;
 
 // Some Middlewares
-app.use(compression());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors(corsOptions));
-app.use(helmet());
-app.disable("x-powered-by");
+app
+  .use(compression())
+  .use(bodyParser.json())
+  .use(bodyParser.urlencoded({ extended: true }))
+  .use(cors(corsOptions))
+  .use(helmet())
+  .use(decodeURL()) // Check URL
+  .use(throttle(5 * 1024 * 1024)) // throttling bandwidth
+  .disable("x-powered-by");
 
-// Check URL
-app.use((req, res, next) => {
-  try {
-    decodeURIComponent(req.path);
-  } catch (err) {
-    console.error("URL Format Error", err);
-    return res.json({
-      success: 0,
-      error: {
-        message: "URL Format Error",
-      },
-    });
-  }
-  next();
-});
-
-if (_.npm_lifecycle_event.toLowerCase() != "setup") console.log(process);
-
-// Logging
-if (process.argv.includes("--log")) {
-  const appResSend = app.response.send;
-  app.response.send = function sendOverWrite(body) {
-    appResSend.call(this, body);
-    this.__custombody__ = body;
+if (_.npm_lifecycle_event.toLowerCase() != "setup") {
+  const logServerInfo = async () => {
+    const { getServerInfo } = require("./api/server/server.service");
+    const server_info = await getServerInfo();
+    const logInnerObj = (from, obj) => {
+      if (checkIfObject(obj)) {
+        Object.keys(obj).forEach((o) => {
+          const current_from = `${from ? from + " > " : ""}${o}`;
+          if (checkIfObject(obj[o])) logInnerObj(current_from, obj[o]);
+          else if (obj[o]) console.log(`[ ${current_from} ]`, obj[o]);
+        });
+      }
+    };
+    logInnerObj(null, server_info);
   };
-  // Console Log All Request and Response
-  morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
-  app.use(
-    morgan(
-      `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
-      :res-body`
-    )
-  );
+  logServerInfo();
+
+  // Logging
+  if (process.argv.includes("--log")) {
+    const appResSend = app.response.send;
+    app.response.send = function sendOverWrite(body) {
+      appResSend.call(this, body);
+      this.__custombody__ = body;
+    };
+    // Console Log All Request and Response
+    morgan.token("res-body", (_req, res) => res.__custombody__ || undefined);
+    app.use(
+      morgan(
+        `[:date[clf]] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
+      :res-body`,
+        {
+          stream: createStream(
+            logFilenameFormat(new Date(), null, { end: "access", ext: "log" }),
+            {
+              interval: "1d",
+              path: path.join(__dirname, "log", "requests"),
+              compress: (source, dest) =>
+                "cat " + source + " | gzip -c9 > " + dest,
+            }
+          ),
+        }
+      )
+    );
+  }
 }
 
 // Check if Running on Production
@@ -88,12 +109,8 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
           : `${_nextarg}.sql`
         : "database.sql";
     console.log("*".repeat(50));
-    if (fs.existsSync(".env") && checkConfig().ok) {
-      const _genDBerror = fs.writeFileSync(
-        sqloc,
-        generateDatabaseSQL(),
-        "utf-8"
-      );
+    if (existsSync(".env") && checkConfig().ok) {
+      const _genDBerror = writeFileSync(sqloc, generateDatabaseSQL(), "utf-8");
       if (_genDBerror) {
         console.error({
           status: "Database failed to generate .sql",
@@ -107,7 +124,7 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
         });
       }
     } else {
-      if (fs.existsSync(sqloc)) fs.rmSync(sqloc);
+      if (existsSync(sqloc)) rmSync(sqloc);
       console.log({
         status: `Can't generate database structure`,
         important: "Please update .env configuration",
@@ -117,7 +134,7 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
   // Generate dotEnv (.env)
   if (process.argv.includes("--genenv")) {
     const envdir = path.join(__dirname, ".env");
-    const _genEnvConf = fs.writeFileSync(envdir, generateDotEnv(), "utf-8");
+    const _genEnvConf = writeFileSync(envdir, generateDotEnv(), "utf-8");
     if (_genEnvConf) {
       console.error(_genEnvConf);
     } else {
@@ -147,8 +164,9 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup") {
   try {
     const path_keys = Object.keys(api_paths);
     path_keys.forEach((_newRoute) => {
-      console.log(`Using /api/${_newRoute}`);
-      app.use(`/api/${_newRoute}`, api_paths[_newRoute]);
+      const api_path = `/api/${_newRoute}`;
+      console.log(`Using ${api_path}`);
+      app.use(`${api_path}`, api_paths[_newRoute]);
     });
   } catch (e) {
     console.error(`Error Adding API Path:`, e);
@@ -159,25 +177,29 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup") {
   REALTIME LISTENERS
 */
 const listeners_apiPath = "/db/listeners",
-  notif_activities = {
-    user: ["added_user", "updated_user", "deleted_user"],
-    transaction: [
-      "added_transaction",
-      "updated_transaction",
-      "deleted_transaction",
-    ],
-  },
-  notifChannels = checkIfObject(notif_activities)
-    ? Object.values(notif_activities).join().split(",")
-    : notif_activities;
+  notif_activities = {};
+
+const db_tables = availableTables();
+if (Array.isArray(db_tables))
+  db_tables.forEach((tbl) => {
+    notif_activities[tbl] = [
+      `added_${tbl}`,
+      `updated_${tbl}`,
+      `deleted_${tbl}`,
+    ];
+  });
+
+const notifChannels = checkIfObject(notif_activities)
+  ? Object.values(notif_activities).join().split(",")
+  : notif_activities;
 
 app.get(listeners_apiPath, (req, res) => {
   return res.json({
     success: 1,
-    listeners: { channel: notifChannels, count: notifChannels.length },
+    listeners: { channel: notifChannels },
     required: {
       token: true,
-      channel: true,
+      channel: false,
     },
   });
 });
@@ -237,6 +259,7 @@ io.sockets.on("connection", (socket) => {
         let hidden_columns = ["password"];
         if (err) {
           let errjson = {
+            error: -1,
             message: "Notications Blocked",
             detail: "Invalid Token",
           };
@@ -323,11 +346,10 @@ app.use((req, res) => {
 });
 
 // Error Response
-app.use((err, req, res) => {
+app.use((req, res) => {
   console.error("Server Error:", {
     url: req.url,
     method: req.method,
-    error: err,
   });
   return res.status(500).json(errorJsonResponse({ detail: "Server Error" }));
 });

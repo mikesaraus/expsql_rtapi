@@ -3,13 +3,13 @@ const { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db");
 const pg_client = require("../../config/database");
 const { dbTables } = require("../../lib/data/db.structures");
 // db table
-const table = _.DBTBL_USERS;
+const table = _.DBTBL_COMPANY;
 
 module.exports = {
   service_create: (data, callBack) => {
     let noncol = data.__noncol || []; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
-    let important = data.__important || ["username", "password"]; // required keys to add as column
+    let important = data.__important || ["name"]; // required keys to add as column
     let cols = Object.keys(data) || {};
     let missingData = [];
     important.forEach((col) => {
@@ -91,14 +91,13 @@ module.exports = {
   service_updateBySingle: (data, callBack) => {
     let noncol = data.__noncol || [
       "id",
-      "userid",
       "__noncol",
       "__important",
       "__toupdate",
       "__options",
     ]; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
-    let important = data.__important || ["__toupdate"]; // ["id", "userid", "username"] required keys to add as column
+    let important = data.__important || ["__toupdate"]; // required keys to add as column
     let cols = Object.keys(data) || {};
     let missingData = [];
     important.forEach((col) => {

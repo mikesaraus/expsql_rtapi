@@ -6,6 +6,7 @@ const {
   loginWithPassword,
   loginViaToken,
   logout,
+  uploadProfilePicture,
 } = require("./user.controller");
 
 // Add New Route Here
@@ -27,6 +28,12 @@ module.exports = [
     path: "/login/secret",
     secure: false,
     handlers: [loginViaToken],
+  },
+  {
+    methods: ["put"],
+    path: "/:userid/picture",
+    secure: true,
+    handlers: [uploadProfilePicture],
   },
   {
     methods: ["get"],
