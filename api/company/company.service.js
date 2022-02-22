@@ -2,6 +2,7 @@ const _ = process.env;
 const { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db");
 const pg_client = require("../../config/database");
 const { dbTables } = require("../../lib/data/db.structures");
+const getObj = require("lodash.get");
 // db table
 const table = _.DBTBL_COMPANY;
 
@@ -40,7 +41,8 @@ module.exports = {
   },
 
   service_view: (data, callBack) => {
-    let __colsData = dbTables[table].columns;
+    console.log(dbTables(), table);
+    let __colsData = getObj(dbTables(), `${table}.columns`);
     let pg_query = `SELECT * FROM ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(

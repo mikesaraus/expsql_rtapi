@@ -1,5 +1,7 @@
 "use strict";
 
+const { log_dirs } = require("./lib/data/db.structures");
+
 require("dotenv").config();
 require("./lib/prototype/date.prototype");
 
@@ -84,9 +86,10 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup") {
             logFilenameFormat(new Date(), null, { end: "access", ext: "log" }),
             {
               interval: "1d",
-              path: path.join(__dirname, "log", "requests"),
-              compress: (source, dest) =>
-                "cat " + source + " | gzip -c9 > " + dest,
+              path: path.join(__dirname, log_dirs.main, log_dirs.request),
+              compress: true,
+              //(source, dest) =>
+              //  "cat " + source + " | gzip -c9 > " + dest,
             }
           ),
         }

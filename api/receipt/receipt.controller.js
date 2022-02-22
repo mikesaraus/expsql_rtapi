@@ -1,11 +1,13 @@
 const _ = process.env;
 const PDFDocument = require("pdfkit");
-const { createWriteStream } = require("fs");
+const { existsSync, mkdirSync } = require("fs");
 const { formatMoney } = require("../../lib/fn/fn.format.js");
 const transaction = require("../transactions/trans.service.js");
 const company = require("../company/company.service.js");
 const getObj = require("lodash.get");
 const { errorJsonResponse } = require("../../lib/fn/fn.db");
+const { log_dirs } = require("../../lib/data/db.structures.js");
+const path = require("path");
 
 module.exports = {
   generateReceipt: (req, res) => {
@@ -19,13 +21,7 @@ module.exports = {
       return res.json(errorJsonResponse({ detail: "No Transaction Found" }));
     else
       company.service_view({}, (e, comp) => {
-        if (typeof data.header === "undefined" || data.header != "false")
-          data.header = true;
-        if (typeof data.footer === "undefined" || data.footer != "false")
-          data.footer = true;
-        if (e) {
-          return res.json(errorJsonResponse(e));
-        }
+        if (e) return res.json(errorJsonResponse(e));
         if (!getObj(comp, "rowCount"))
           return res.json(
             errorJsonResponse({ detail: "Failed to Get Company Details" })
@@ -39,6 +35,10 @@ module.exports = {
             if (err) {
               return res.json(errorJsonResponse(err));
             }
+            if (typeof data.header === "undefined" || data.header != "false")
+              data.header = true;
+            if (typeof data.footer === "undefined" || data.footer != "false")
+              data.footer = true;
             const trans_data = results ? results.rows || [] : [];
             if (!trans_data.length)
               return res.json(
@@ -432,8 +432,6 @@ module.exports = {
               `${download ? "attachment" : "inline"}; filename="${filename}"`
             );
             res.setHeader("Content-type", "application/pdf");
-
-            doc.pipe(createWriteStream("log/test.pdf"));
             doc.pipe(res);
             doc.end();
           }

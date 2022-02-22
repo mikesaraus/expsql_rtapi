@@ -3,6 +3,7 @@ const pg_client = require("../../config/database");
 const { dbTables } = require("../../lib/data/db.structures");
 const { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db");
 const { generateTransactionID } = require("../../lib/fn/fn.generator");
+const getObj = require("lodash.get");
 // db table
 const table = _.DBTBL_TRANSACTIONS;
 
@@ -49,7 +50,7 @@ module.exports = {
   },
 
   service_view: (data, callBack) => {
-    let __colsData = dbTables[table].columns;
+    let __colsData = getObj(dbTables(), `${table}.columns`);
     let pg_query = `SELECT * FROM ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
@@ -135,7 +136,7 @@ module.exports = {
   },
 
   service_viewSummary: (data, callBack) => {
-    let __colsData = dbTables[table].columns;
+    let __colsData = getObj(dbTables(), `${table}.columns`);
     let _selections_count = [
       `COUNT(amount_paid) as count_overall`,
       `COALESCE(SUM(CASE WHEN TO_CHAR(date_paid,'YYYY')=TO_CHAR(CURRENT_TIMESTAMP,'YYYY') THEN 1 ELSE 0 END),0) as count_thisyear`,
@@ -264,7 +265,7 @@ module.exports = {
   },
 
   service_viewReport: (data, callBack) => {
-    let __colsData = dbTables[table].columns;
+    let __colsData = getObj(dbTables(), `${table}.columns`);
     let columns = data.groupby ? data.groupby.split("||") : ["branch_location"];
     data.groupby = columns.join("||");
     let pg_query = `SELECT ${columns.join(", ")}`;
