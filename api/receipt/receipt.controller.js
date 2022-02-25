@@ -180,6 +180,10 @@ module.exports = {
                   .opacity(1);
               else y = doc.page.margins.top + 50;
 
+              // Calculate Total Paid
+              let totalPaid =
+                Number(trans.amount_paid) + Number(trans.trans_fee);
+
               // BODY
               // Left Side
               doc
@@ -235,7 +239,7 @@ module.exports = {
                 // VAT Sales
                 .text("VAT Sales", x + 30, (y += font_size + 15))
                 .text(":", x + 200, y)
-                .text(`${formatMoney(trans.amount_paid)}`, x + 230, y)
+                .text(`${formatMoney(totalPaid)}`, x + 230, y)
 
                 // Non-VAT Sales
                 .text("Non-VAT Sales", x + 30, (y += font_size + 10))
@@ -265,7 +269,7 @@ module.exports = {
                 // Total
                 .text("Total", x + 30, (y += font_size + 10))
                 .text(":", x + 200, y)
-                .text(`${formatMoney(trans.amount_paid)}`, x + 230, y)
+                .text(`${formatMoney(totalPaid)}`, x + 230, y)
 
                 // Amount Received
                 .text("Amount Received", x + 30, (y += font_size + 10))
@@ -276,7 +280,7 @@ module.exports = {
                 .text("Amount Change", x + 30, (y += font_size + 10))
                 .text(":", x + 200, y)
                 .text(
-                  `${formatMoney(trans.amount_received - trans.amount_paid)}`,
+                  `${formatMoney(trans.amount_received - totalPaid)}`,
                   x + 230,
                   y
                 );
@@ -336,7 +340,7 @@ module.exports = {
                 // VAT Sales
                 .text("VAT Sales", x, (y += font_size + 15))
                 .text(":", x + 120, y)
-                .text(`${formatMoney(trans.amount_paid)}`, x + 135, y)
+                .text(`${formatMoney(totalPaid)}`, x + 135, y)
 
                 // Non-VAT Sales
                 .text("Non-VAT Sales", x, (y += font_size + 10))
@@ -366,7 +370,7 @@ module.exports = {
                 // Total
                 .text("Total", x, (y += font_size + 10))
                 .text(":", x + 120, y)
-                .text(`${formatMoney(trans.amount_paid)}`, x + 135, y)
+                .text(`${formatMoney(totalPaid)}`, x + 135, y)
 
                 // Amount Received
                 .text("Amount Received", x, (y += font_size + 10))
@@ -377,7 +381,7 @@ module.exports = {
                 .text("Amount Change", x, (y += font_size + 10))
                 .text(":", x + 120, y)
                 .text(
-                  `${formatMoney(trans.amount_received - trans.amount_paid)}`,
+                  `${formatMoney(trans.amount_received - totalPaid)}`,
                   x + 135,
                   y
                 );

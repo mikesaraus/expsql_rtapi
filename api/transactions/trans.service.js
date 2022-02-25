@@ -51,7 +51,7 @@ module.exports = {
 
   service_view: (data, callBack) => {
     let __colsData = getObj(dbTables(), `${table}.columns`);
-    let pg_query = `SELECT * FROM ${table}`;
+    let pg_query = `SELECT ${data.count ? "COUNT(*)" : "*"} FROM ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
       data,

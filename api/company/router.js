@@ -16,7 +16,7 @@ module.exports = [
   },
   {
     methods: ["put"],
-    path: "/name",
+    path: "/name/:name",
     secure: true,
     handlers: [updateByParam0],
   },

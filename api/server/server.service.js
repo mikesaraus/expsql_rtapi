@@ -1,7 +1,7 @@
 const _ = process.env;
 const drivelist = require("drivelist");
 const os = require("os");
-const { envVars } = require("../../lib/data/db.structures");
+const { envVars, dbTables } = require("../../lib/data/db.structures");
 const { whitelistServers } = require("../../lib/fn/fn.checker");
 const getObj = require("lodash.get");
 
@@ -97,5 +97,22 @@ module.exports = {
       });
     } else response.data[data.replaceAll(".", "_")] = getObj(server, data);
     callBack(null, response);
+  },
+
+  serviceGetDBCType: async (data, callback) => {
+    const tbl = dbTables()[data.table];
+    if (!tbl) return callback(new Error("Unknown Table"));
+    let info;
+    if (tbl.custom_types && Array.isArray(tbl.custom_types))
+      tbl.custom_types.forEach((type, i) => {
+        if (type.name == data.type) {
+          info = tbl.custom_types[i];
+        }
+      });
+    if (!info) return callback(new Error("Unknown CType"));
+    return callback(null, {
+      success: 1,
+      data: info,
+    });
   },
 };

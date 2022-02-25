@@ -6,7 +6,7 @@ const {
   service_updateBySingle,
 } = require("./user.service");
 const _ = process.env;
-const { service_upload } = require("../../lib/upload");
+const { service_upload } = require("../../lib/uploader");
 const { regex_username } = require("../../lib/fn/fn.patters");
 const { compareSync } = require("bcrypt");
 const { block_keywords } = require("../../lib/data/blocklists");

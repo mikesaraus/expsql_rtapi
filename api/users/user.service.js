@@ -42,7 +42,29 @@ module.exports = {
 
   service_view: (data, callBack) => {
     let __colsData = getObj(dbTables(), `${table}.columns`);
-    let pg_query = `SELECT * FROM ${table}`;
+    let pg_query = `SELECT ${data.count ? "COUNT(*)" : "*"} FROM ${table}`;
+    data.pg_query = pg_query;
+    let { query_cond, query_endstement, query_vals } = queryConditioner(
+      data,
+      __colsData
+    );
+    if (query_cond.length) pg_query += ` WHERE ${query_cond.join(" AND ")}`;
+    if (query_endstement.length) pg_query += ` ${query_endstement.join(" ")}`;
+    let pg_setvals = [];
+    if (query_vals.length) pg_setvals.push(...query_vals);
+    pg_client.query(pg_query, pg_setvals, (error, results) => {
+      if (error) {
+        error.query = queryVars2Vals(pg_query, pg_setvals);
+        return callBack(error);
+      }
+      results.query = queryVars2Vals(pg_query, pg_setvals);
+      return callBack(null, results);
+    });
+  },
+
+  service_view_branches: (data, callBack) => {
+    let __colsData = getObj(dbTables(), `${table}.columns`);
+    let pg_query = `SELECT DISTINCT(branch_location) FROM ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
       data,
