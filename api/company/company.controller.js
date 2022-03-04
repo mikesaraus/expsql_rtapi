@@ -1,20 +1,13 @@
 const {
-  service_create,
-  service_view,
-  service_viewOptions,
-  service_deleteBySingle,
-  service_updateBySingle,
-} = require("./company.service");
-const _ = process.env;
-const { compareSync } = require("bcrypt");
-const { block_keywords } = require("../../lib/data/blocklists");
-const { base64 } = require("../../lib/fn/fn.generator");
-const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
-const {
-  signToken,
-  verifyCBPrivatePublicToken,
-} = require("../../auth/token.service");
-const getObj = require("lodash.get");
+    service_create,
+    service_view,
+    service_deleteBySingle,
+    service_updateBySingle,
+  } = require("./company.service"),
+  _ = process.env,
+  { block_keywords } = require("../../lib/data/blocklists"),
+  { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db"),
+  { signToken } = require("../../auth/token.service");
 
 module.exports = {
   create: (req, res) => {

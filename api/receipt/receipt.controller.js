@@ -1,13 +1,10 @@
-const _ = process.env;
-const PDFDocument = require("pdfkit");
-const { existsSync, mkdirSync } = require("fs");
-const { formatMoney } = require("../../lib/fn/fn.format.js");
-const transaction = require("../transactions/trans.service.js");
-const company = require("../company/company.service.js");
-const getObj = require("lodash.get");
-const { errorJsonResponse } = require("../../lib/fn/fn.db");
-const { log_dirs } = require("../../lib/data/db.structures.js");
-const path = require("path");
+const _ = process.env,
+  PDFDocument = require("pdfkit"),
+  { formatMoney } = require("../../lib/fn/fn.format.js"),
+  transaction = require("../transactions/trans.service.js"),
+  company = require("../company/company.service.js"),
+  getObj = require("lodash.get"),
+  { errorJsonResponse } = require("../../lib/fn/fn.db");
 
 module.exports = {
   generateReceipt: (req, res) => {

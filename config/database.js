@@ -1,24 +1,25 @@
-const _ = process.env;
-const pg = require("pg");
-
-let db_config = {
-  host: _.DB_HOST,
-  database: _.DB_NAME,
-  port: _.DB_PORT,
-  user: _.DB_USER,
-  password: _.DB_PWD,
-};
-
-let pg_client = new pg.Client(db_config);
+const _ = process.env,
+  { decode } = require("../lib/fn/fn.generator").base64,
+  pg = require("pg"),
+  config = {
+    host: _.DB_HOST,
+    database: _.DB_NAME,
+    port: _.DB_PORT,
+    user: _.DB_USER,
+    password: decode(_.DB_PWD),
+  },
+  pg_client = new pg.Client(config);
 
 pg_client.connect((err) => {
   if (err) {
-    console.error("Can't connect to database");
+    if (_.npm_lifecycle_event && _.npm_lifecycle_event.toLowerCase() != "setup")
+      console.error("Can't connect to database");
     err.status = err.message;
     throw err;
   } else {
-    console.log("# Database connection established");
+    if (_.npm_lifecycle_event && _.npm_lifecycle_event.toLowerCase() != "setup")
+      console.log("# Database connection established");
   }
 });
 
-module.exports = pg_client;
+module.exports = { config, pg_client };

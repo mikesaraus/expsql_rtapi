@@ -1,7 +1,6 @@
-const router = require("express").Router();
-const { verifyToken } = require("../../auth/token.service");
-
-const paths = require("./router");
+const router = require("express").Router(),
+  { verifyToken } = require("../../auth/token.service"),
+  paths = require("./router");
 
 try {
   paths.forEach((_newRoute) => {

@@ -1,24 +1,22 @@
 "use strict";
 
-const { log_dirs } = require("./lib/data/db.structures");
-
 require("dotenv").config();
 require("./lib/prototype/date.prototype");
 
 const _ = process.env,
   express = require("express"),
   app = express(),
-  server = require("http").createServer(app),
-  compression = require("compression"),
+  path = require("path"),
   cors = require("cors"),
   morgan = require("morgan"),
   helmet = require("helmet"),
+  compression = require("compression"),
   bodyParser = require("body-parser"),
-  path = require("path"),
+  { log_dirs } = require("./lib/data/db.structures"),
   { createStream } = require("rotating-file-stream"),
   { logFilenameFormat } = require("./lib/fn/fn.format"),
   { throttle, decodeURL } = require("./lib/middleware"),
-  { existsSync, rmSync, writeFileSync } = require("fs"),
+  { existsSync, rmSync, readFileSync, writeFileSync } = require("fs"),
   { verifyCBPrivatePublicToken, verifyToken } = require("./auth/token.service"),
   {
     errorJsonResponse,
@@ -30,15 +28,33 @@ const _ = process.env,
   corsOptions = {
     origin: checkCors.appCorsOption,
     optionsSuccessStatus: 200,
-  },
+  };
+
+const createServer = () => {
+  const key = _.SSL_KEY;
+  const cert = _.SSL_CERT;
+  const ssl =
+    existsSync(key) && existsSync(cert)
+      ? {
+          key: readFileSync(key),
+          cert: readFileSync(cert),
+        }
+      : null;
+  return ssl
+    ? require("https").createServer(ssl, app)
+    : require("http").createServer(app);
+};
+// Create Server
+const server = createServer(),
   io = require("socket.io")(server, {
     allowRequest: checkCors.socketAllowRequest,
     cors: checkCors.socketCorsOptions,
     credentials: true,
   }),
-  pg_client = require("./config/database");
+  { pg_client } = require("./config").database;
 
 process.title = _.npm_package_name || process.title;
+process.env.starttime = Date.now();
 
 // Some Middlewares
 app
@@ -51,7 +67,7 @@ app
   .use(throttle(5 * 1024 * 1024)) // throttling bandwidth
   .disable("x-powered-by");
 
-if (_.npm_lifecycle_event.toLowerCase() != "setup") {
+if (_.npm_lifecycle_event && _.npm_lifecycle_event.toLowerCase() != "setup") {
   const logServerInfo = async () => {
     const { getServerInfo } = require("./api/server/server.service");
     const server_info = await getServerInfo();
@@ -101,6 +117,7 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup") {
 // Check if Running on Production
 if (!_.NODE_ENV || _.NODE_ENV != "production") {
   require("./lib/fn/fn.nodemon");
+  require("./lib/data/commands.js");
   // Save DB Structure
   if (process.argv.includes("--gensql")) {
     const gensqlid = process.argv.indexOf("--gensql");
@@ -134,6 +151,7 @@ if (!_.NODE_ENV || _.NODE_ENV != "production") {
       });
     }
   }
+
   // Generate dotEnv (.env)
   if (process.argv.includes("--genenv")) {
     const envdir = path.join(__dirname, ".env");
@@ -162,7 +180,7 @@ app.use("/", express.static("./public"));
 /*
   API Routes
 */
-if (_.npm_lifecycle_event.toLowerCase() != "setup") {
+if (_.npm_lifecycle_event && _.npm_lifecycle_event.toLowerCase() != "setup") {
   const api_paths = require("./api");
   try {
     const path_keys = Object.keys(api_paths);
@@ -357,7 +375,7 @@ app.use((req, res) => {
   return res.status(500).json(errorJsonResponse({ detail: "Server Error" }));
 });
 
-if (_.npm_lifecycle_event.toLowerCase() != "setup")
+if (_.npm_lifecycle_event && _.npm_lifecycle_event.toLowerCase() != "setup") {
   server.listen(process.env.PORT || _.SRV_MAIN_PORT, () => {
     console.log("#".repeat(50));
     console.log(
@@ -365,3 +383,4 @@ if (_.npm_lifecycle_event.toLowerCase() != "setup")
     );
     console.log("#".repeat(50));
   });
+}

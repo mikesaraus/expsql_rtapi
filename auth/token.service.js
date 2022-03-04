@@ -1,6 +1,6 @@
-const _ = process.env;
-const { sign, verify } = require("jsonwebtoken");
-const { errorJsonResponse } = require("../lib/fn/fn.db");
+const _ = process.env,
+  { sign, verify } = require("jsonwebtoken"),
+  { errorJsonResponse } = require("../lib/fn/fn.db");
 
 module.exports = {
   signToken: (

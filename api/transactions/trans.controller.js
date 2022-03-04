@@ -1,15 +1,15 @@
 const {
-  service_create,
-  service_view,
-  service_deleteBySingle,
-  service_updateBySingle,
-  service_viewSummary,
-  service_viewReport,
-} = require("./trans.service");
-const _ = process.env;
-const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
-const { block_keywords } = require("../../lib/data/blocklists");
-const getObj = require("lodash.get");
+    service_create,
+    service_view,
+    service_deleteBySingle,
+    service_updateBySingle,
+    service_viewSummary,
+    service_viewReport,
+  } = require("./trans.service"),
+  _ = process.env,
+  { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db"),
+  { block_keywords } = require("../../lib/data/blocklists"),
+  getObj = require("lodash.get");
 
 module.exports = {
   create: (req, res) => {
@@ -22,7 +22,7 @@ module.exports = {
     let blklists = block_keywords.concat(
       blklist.filter((item) => blklist.indexOf(item) < 1)
     );
-    if (blklists.includes(data.account_name)) {
+    if (blklists.includes(String(data.account_name || "").toLowerCase())) {
       return res.json(
         errorJsonResponse({ detail: "Account Name Not Allowed" })
       );

@@ -1,9 +1,10 @@
-const _ = process.env;
-const drivelist = require("drivelist");
-const os = require("os");
-const { envVars, dbTables } = require("../../lib/data/db.structures");
-const { whitelistServers } = require("../../lib/fn/fn.checker");
-const getObj = require("lodash.get");
+const _ = process.env,
+  drivelist = require("drivelist"),
+  os = require("os"),
+  { envVars, dbTables } = require("../../lib/data/db.structures"),
+  { whitelistServers } = require("../../lib/fn/fn.checker"),
+  getObj = require("lodash.get"),
+  isOnline = require("../../lib/fn/fn.isonline");
 
 const getServerInfo = async () => {
   const os_info = [
@@ -31,6 +32,7 @@ const getServerInfo = async () => {
   let server = {
     info: {
       datetime: null,
+      starttime: Number(_.starttime),
       os: {},
       drives: [],
     },
@@ -42,7 +44,6 @@ const getServerInfo = async () => {
       debugPort: process.debugPort,
       environment: _.NODE_ENV,
       init_cwd: _.INIT_CWD,
-      domain: process.domain,
       api: {
         port: _.SRV_MAIN_PORT,
         allowed_host: whitelistServers,
@@ -77,6 +78,17 @@ const getServerInfo = async () => {
     server.info.drives.push(drive);
   });
 
+  server.info.isOnline = await isOnline({
+    timeout: 250,
+    retries: 1,
+  })
+    .then(() => {
+      return true;
+    })
+    .catch(() => {
+      return false;
+    });
+
   return server;
 };
 
@@ -89,7 +101,7 @@ module.exports = {
       success: 1,
       data: {},
     };
-    if (data === undefined) response = server;
+    if (data === undefined) response.data = server;
     else if (Array.isArray(data)) {
       data.forEach((d) => {
         if (getObj(server, d))

@@ -1,22 +1,22 @@
 const {
-  service_create,
-  service_view,
-  service_viewOptions,
-  service_deleteBySingle,
-  service_updateBySingle,
-} = require("./user.service");
-const _ = process.env;
-const { service_upload } = require("../../lib/uploader");
-const { regex_username } = require("../../lib/fn/fn.patters");
-const { compareSync } = require("bcrypt");
-const { block_keywords } = require("../../lib/data/blocklists");
-const { encryptPassword, base64 } = require("../../lib/fn/fn.generator");
-const { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db");
-const {
-  signToken,
-  verifyCBPrivatePublicToken,
-} = require("../../auth/token.service");
-const getObj = require("lodash.get");
+    service_create,
+    service_view,
+    service_viewOptions,
+    service_deleteBySingle,
+    service_updateBySingle,
+  } = require("./user.service"),
+  _ = process.env,
+  { service_upload } = require("../../lib/uploader"),
+  { regex_username } = require("../../lib/fn/fn.patters"),
+  { compareSync } = require("bcrypt"),
+  { block_keywords } = require("../../lib/data/blocklists"),
+  { encryptPassword, base64 } = require("../../lib/fn/fn.generator"),
+  { hideSomeColumns, errorJsonResponse } = require("../../lib/fn/fn.db"),
+  {
+    signToken,
+    verifyCBPrivatePublicToken,
+  } = require("../../auth/token.service"),
+  getObj = require("lodash.get");
 
 module.exports = {
   create: (req, res) => {

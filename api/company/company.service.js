@@ -1,8 +1,8 @@
-const _ = process.env;
-const { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db");
-const pg_client = require("../../config/database");
-const { dbTables } = require("../../lib/data/db.structures");
-const getObj = require("lodash.get");
+const _ = process.env,
+  { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db"),
+  { pg_client } = require("../../config").database,
+  { dbTables } = require("../../lib/data/db.structures"),
+  getObj = require("lodash.get");
 // db table
 const table = _.DBTBL_COMPANY;
 
@@ -11,7 +11,7 @@ module.exports = {
     let noncol = data.__noncol || []; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
     let important = data.__important || ["name"]; // required keys to add as column
-    let cols = Object.keys(data) || {};
+    let cols = Object.keys(data) || [];
     let missingData = [];
     important.forEach((col) => {
       if (!cols.includes(col)) missingData.push(col);
@@ -41,7 +41,6 @@ module.exports = {
   },
 
   service_view: (data, callBack) => {
-    console.log(dbTables(), table);
     let __colsData = getObj(dbTables(), `${table}.columns`);
     let pg_query = `SELECT * FROM ${table}`;
     data.pg_query = pg_query;
@@ -65,7 +64,7 @@ module.exports = {
 
   service_viewOptions: (data, callBack) => {
     const __tokey = Object.keys(data)[0];
-    pg_query = `SELECT * FROM ${table} WHERE ${__tokey}${
+    let pg_query = `SELECT * FROM ${table} WHERE ${__tokey}${
       data.__match_like ? " LIKE " : "="
     }$1`;
     if (data.limit && !isNaN(data.limit))
@@ -100,7 +99,7 @@ module.exports = {
     ]; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
     let important = data.__important || ["__toupdate"]; // required keys to add as column
-    let cols = Object.keys(data) || {};
+    let cols = Object.keys(data) || [];
     let missingData = [];
     important.forEach((col) => {
       if (!cols.includes(col)) missingData.push(col);
@@ -133,7 +132,7 @@ module.exports = {
 
   service_deleteBySingle: (data, callBack) => {
     let important = data.__important || ["__toupdate"]; // required keys to add as column
-    let cols = Object.keys(data) || {};
+    let cols = Object.keys(data) || [];
     let missingData = [];
     important.forEach((col) => {
       if (!cols.includes(col)) missingData.push(col);

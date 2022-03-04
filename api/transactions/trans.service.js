@@ -1,9 +1,9 @@
-const _ = process.env;
-const pg_client = require("../../config/database");
-const { dbTables } = require("../../lib/data/db.structures");
-const { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db");
-const { generateTransactionID } = require("../../lib/fn/fn.generator");
-const getObj = require("lodash.get");
+const _ = process.env,
+  { pg_client } = require("../../config").database,
+  { dbTables } = require("../../lib/data/db.structures"),
+  { queryVars2Vals, queryConditioner } = require("../../lib/fn/fn.db"),
+  { generateTransactionID } = require("../../lib/fn/fn.generator"),
+  getObj = require("lodash.get");
 // db table
 const table = _.DBTBL_TRANSACTIONS;
 
@@ -20,7 +20,7 @@ module.exports = {
       "amount_paid",
       "amount_received",
     ]; // required keys to add as column
-    let cols = Object.keys(data);
+    let cols = Object.keys(data) || [];
     let missingData = [];
     important.forEach((col) => {
       if (!cols.includes(col)) missingData.push(col);
@@ -32,7 +32,9 @@ module.exports = {
         if (cols.includes(key)) cols.splice(cols.indexOf(key), 1);
       });
     let pg_setvals = [];
-    let pg_query = `INSERT INTO ${table} (trans_id, ${cols}) VALUES(${generateTransactionID()},`;
+    let pg_query = `INSERT INTO ${table} (trans_id, ${cols}) VALUES(${generateTransactionID(
+      false
+    )},`;
     for (var i = 1; i <= cols.length; i++) {
       pg_query += `$` + i;
       if (i != cols.length) pg_query += `, `;
@@ -51,7 +53,9 @@ module.exports = {
 
   service_view: (data, callBack) => {
     let __colsData = getObj(dbTables(), `${table}.columns`);
-    let pg_query = `SELECT ${data.count ? "COUNT(*)" : "*"} FROM ${table}`;
+    let pg_query = `SELECT ${
+      data.count ? "COUNT(*)" : data.columns ? data.columns : "*"
+    } FROM ${table}`;
     data.pg_query = pg_query;
     let { query_cond, query_endstement, query_vals } = queryConditioner(
       data,
@@ -82,7 +86,7 @@ module.exports = {
     ]; // keys not to include as columns
     if (noncol.length && !noncol.includes("__noncol")) noncol.push("__noncol");
     let important = data.__important || ["__toupdate"]; // required keys to add as column
-    let cols = Object.keys(data);
+    let cols = Object.keys(data) || [];
     let missingData = [];
     important.forEach((col) => {
       if (!cols.includes(col)) missingData.push(col);
@@ -115,7 +119,7 @@ module.exports = {
 
   service_deleteBySingle: (data, callBack) => {
     let important = data.__important || ["__toupdate"]; // required keys to add as column
-    let cols = Object.keys(data);
+    let cols = Object.keys(data) || [];
     let missingData = [];
     important.forEach((col) => {
       if (!cols.includes(col)) missingData.push(col);
@@ -194,7 +198,7 @@ module.exports = {
         )}`
       );
     });
-    pg_query = `SELECT ${[
+    let pg_query = `SELECT ${[
       _selections_count.join(", "),
       _selections_total.join(", "),
     ].join(", ")} FROM

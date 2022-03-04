@@ -1,15 +1,15 @@
-const _ = process.env;
-const { errorJsonResponse } = require("../../lib/fn/fn.db");
-const service_user = require("../users/user.service");
-const { serviceServerInfo, serviceGetDBCType } = require("./server.service");
-const getObj = require("lodash.get");
+const _ = process.env,
+  { errorJsonResponse } = require("../../lib/fn/fn.db"),
+  service_user = require("../users/user.service"),
+  { serviceServerInfo, serviceGetDBCType } = require("./server.service"),
+  getObj = require("lodash.get");
 
 module.exports = {
   publicDetails: async (req, res) => {
     serviceServerInfo("info.datetime", (cerr, cresponse) => {
       let response = cresponse;
       if (cerr) return res.json(errorJsonResponse(cerr));
-      service_user.service_view({ count: true }, (err, resp) => {
+      service_user.service_view({ count: true }, async (err, resp) => {
         if (err) return res.json(errorJsonResponse(err));
         const result = getObj(resp, "rows", [])[0];
         response.data.setup =

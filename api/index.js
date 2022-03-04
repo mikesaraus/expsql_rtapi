@@ -5,4 +5,5 @@ module.exports = {
   transaction: require("./transactions"),
   user: require("./users"),
   receipt: require("./receipt"),
+  email: require("./email"),
 };
