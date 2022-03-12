@@ -1,23 +1,23 @@
-const { generateReceipt } = require("./receipt.controller");
+const { generateReceipt } = require('./receipt.controller')
 
 // Add New Route Here
 module.exports = [
   {
-    methods: ["get"],
-    path: "/",
+    methods: ['get'],
+    path: '/',
     secure: false,
     handlers: [generateReceipt],
   },
   {
-    methods: ["get"],
-    path: "/secure",
+    methods: ['get'],
+    path: '/secure',
     secure: true,
     handlers: [generateReceipt],
   },
   {
-    methods: ["get"],
-    path: "/:trans_id",
+    methods: ['get'],
+    path: '/:trans_id',
     secure: false,
     handlers: [generateReceipt],
   },
-];
+]

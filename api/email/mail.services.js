@@ -1,8 +1,8 @@
 const _ = process.env,
-  nodemailer = require("nodemailer"),
-  fs = require("fs"),
-  path = require("path"),
-  { decode } = require("../../lib/fn/fn.generator").base64;
+  nodemailer = require('nodemailer'),
+  fs = require('fs'),
+  path = require('path'),
+  { decode } = require('../../lib/fn/fn.generator').base64
 // Create mail transporter
 const transporter = nodemailer.createTransport({
   name: _.MAIL_NAME,
@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
     user: _.MAIL_AUTH_USER,
     pass: decode(_.MAIL_AUTH_PWD),
   },
-});
+})
 
 module.exports = {
   SendEmail: (data, callback) => {
@@ -22,31 +22,31 @@ module.exports = {
       subject: data.subject,
       text: data.text,
       html: data.html,
-    };
+    }
     transporter.verify((err, success) => {
       if (err) {
-        callback(err);
+        callback(err)
       } else {
         transporter.sendMail(mailOptions, function (error, info) {
           if (error) {
-            callback(error);
+            callback(error)
           } else {
-            callback(null, info);
+            callback(null, info)
           }
-        });
+        })
       }
-    });
+    })
     module.exports.CloseEmailConnection((e) => {
-      if (e) console.error("Failed Clossing Email Connection:", e);
-    });
+      if (e) console.error('Failed Clossing Email Connection:', JSON.stringify(e))
+    })
   },
 
   CloseEmailConnection: (callback) => {
     try {
-      transporter.close();
-      callback(null, true);
+      transporter.close()
+      callback(null, true)
     } catch (error) {
-      callback(error);
+      callback(error)
     }
   },
-};
+}

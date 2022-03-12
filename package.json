@@ -6,20 +6,29 @@
   "main": "app.js",
   "scripts": {
     "setup": "node app.js --gensql database.sql --genenv",
-    "dev": "DEBUG=express:* nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js --log",
+    "dev": "DEBUG=express:* nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js --log 2>&1 | tee ./log/console-\"$(date '+%Y%m%d-%H%M%S')\".log -a -p",
     "dev-nolog": "DEBUG=express:* nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js",
-    "start": "DEBUG=express:* NODE_ENV=production node app.js --log 2>&1 | tee ./log/console-\"$(date '+%Y%m%d-%H%M%S')\".log -a -p"
+    "start": "NODE_ENV=production node app.js --log 2>&1 | tee ./log/console-\"$(date '+%Y%m%d-%H%M%S')\".log -a -p"
   },
   "keywords": [
-    "NodeJs",
-    "Expressjs",
-    "PostgreSQL",
-    "Node-Cache"
+    "NodeJS",
+    "ExpressJS",
+    "PostgreSQL"
   ],
   "author": {
-    "name": "mikesaraus"
+    "name": "Mike Saraus",
+    "email": "mizkie98@gmail.com",
+    "url": "https://gitlab.com/mikesaraus"
   },
-  "license": "0BSD",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/mikesaraus/expsql_rtapi.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/mikesaraus/expsql_rtapi/issues"
+  },
+  "homepage": "https://gitlab.com/mikesaraus/expsql_rtapi#readme",
+  "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.0.1",
     "compression": "^1.7.4",
@@ -41,6 +50,8 @@
     "socket.io": "^4.4.0"
   },
   "devDependencies": {
+    "@types/formidable": "^2.0.4",
+    "auto-git-update": "^2.1.0",
     "nodemon": "^2.0.15",
     "prettier": "^2.5.1"
   }
