@@ -4,16 +4,18 @@
 node_modules
 
 # Test Direcoty
-test
+/test
+/testing
 
 # Database Files
 *.sql
 
 # Uploads Directory
-public/uploads
+/public/uploads
 
 # Log Directory
-log
+/log/*
+
 
 # Log files
 npm-debug.log*
@@ -26,3 +28,7 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# Always Put Last
+# Keep Excluded
+!.gitkeep 

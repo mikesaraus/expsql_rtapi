@@ -64,9 +64,6 @@ app
   .use(throttle(5 * 1024 * 1024)) // throttling bandwidth
   .disable('x-powered-by')
 
-// Create Log Directory if Missing
-if (!existsSync('log')) mkdirSync('log')
-
 if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
   const { getServerInfo } = require('./api/server/server.service')
   getServerInfo().then((server_info) => console.log(JSON.stringify(server_info)))
@@ -321,7 +318,7 @@ io.sockets.on('connection', (socket) => {
 // Bad Requests
 app.use((req, res) => {
   console.error('Invalid Endpoint:', JSON.stringify({ url: req.url, method: req.method }))
-  return res.status(500).json(errorJsonResponse({ detail: 'Invalid Endpoint' }))
+  return res.status(404).json(errorJsonResponse({ detail: 'Invalid Endpoint' }))
 })
 
 // Error Response
