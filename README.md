@@ -6,7 +6,7 @@
 - NPM ^8.4.1
 - PostgreSQL ^13.5
 
-<hr><br/>
+<hr>
 
 ### Clone the Repository
 
@@ -26,13 +26,9 @@ cd expsql_rtapi && npm install
 npm run setup
 ```
 
-<br>
-
 ### Modify `.env` configuration
 
 ### Follow the commands inside `database.sql`
-
-<br>
 
 #### PSQL Create New User
 
@@ -46,8 +42,6 @@ INSERT INTO users(userid, username, password, firstname, lastname, gender, uemai
 INSERT INTO company(name, name_short, name_abbr, website, email, phone, address_1, address_2, tin, color_primary, convenience_fee) VALUES('Trans Pilipinas Power & Automation Inc.', 'Trans Pilipinas', 'TPPA', 'https://tppainc.com', 'sales.support@tppainc.com', '(082) 233-4688', 'Building 1, Quimpo Compound', 'Jail Road Maa, Davao City', '0', '#22a6ee', 2);
 ```
 
-<br>
-
 ### Run in Development Mode
 
 ```bash
@@ -60,7 +54,7 @@ npm run dev
 npm start
 ```
 
-<br><hr><br>
+<hr>
 
 ### Essential Links
 
