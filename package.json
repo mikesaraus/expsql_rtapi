@@ -1,7 +1,9 @@
 {
   "name": "payment_system",
-  "version": "0.0.3",
+  "version": "0.0.1",
+  "productName": "Payment System",
   "description": "Realtime API for Payment System",
+  "displayName": "PSQL-Express Realtime API",
   "private": true,
   "main": "app.js",
   "scripts": {
@@ -31,7 +33,9 @@
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "body-parser": "^1.19.2",
     "compression": "^1.7.4",
+    "cors": "^2.8.5",
     "dns-socket": "^4.2.2",
     "dotenv": "^10.0.0",
     "drivelist": "^9.2.4",

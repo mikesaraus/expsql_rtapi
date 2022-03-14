@@ -27,8 +27,10 @@ const { log_dirs } = require('./lib/data/db.structures'),
 const corsOptions = {
   origin: checkCors.appCorsOption,
   optionsSuccessStatus: 200,
+  methods: ['GET', 'PUT', 'POST', 'DELETE'],
 }
 
+// Create HTTP or HTTPS Server
 const createServer = () => {
   const key = _.SSL_KEY
   const cert = _.SSL_CERT
@@ -39,9 +41,14 @@ const createServer = () => {
           cert: readFileSync(cert),
         }
       : null
-  return ssl ? require('https').createServer(ssl, app) : require('http').createServer(app)
+  return ssl
+    ? // https://
+      require('https').createServer(ssl, app)
+    : // http://
+      require('http').createServer(app)
 }
-// Create Server
+
+// Initialize Server
 const server = createServer(),
   io = require('socket.io')(server, {
     allowRequest: checkCors.socketAllowRequest,
@@ -50,6 +57,7 @@ const server = createServer(),
   }),
   { pg_client } = require('./config').database
 
+// Some Process
 process.title = _.npm_package_name || process.title
 process.env.starttime = Date.now()
 
@@ -61,13 +69,12 @@ app
   .use(cors(corsOptions))
   .use(helmet())
   .use(decodeURL()) // Check URL
-  .use(throttle(5 * 1024 * 1024)) // throttling bandwidth
+  .use(throttle(5 * 1024 * 1024)) // Throttling bandwidth (bytes)
   .disable('x-powered-by')
 
 if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
   const { getServerInfo } = require('./api/server/server.service')
   getServerInfo().then((server_info) => console.log(JSON.stringify(server_info)))
-
   // Logging
   if (process.argv.includes('--log')) {
     const appResSend = app.response.send
@@ -77,6 +84,7 @@ if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
     }
     morgan.token('datetime', (_req, res) => new Date())
     morgan.token('res-body', (_req, res) => res.__custombody__ || undefined)
+    // Console Log All Request and Response
     app.use(
       morgan(
         `[:datetime] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
@@ -162,7 +170,7 @@ if (!_.NODE_ENV || _.NODE_ENV != 'production') {
 }
 
 // Static Routes
-app.use('/', express.static('./public'))
+app.use(express.static('./public'))
 
 /*
  * API Routes
@@ -225,7 +233,7 @@ app.post(listeners_apiPath, verifyToken, (req, res) => {
   }
 })
 
-// Listen
+// Listeners
 notifChannels.forEach((activity) => {
   pg_client.query(`LISTEN ${activity}`)
 })
@@ -334,9 +342,9 @@ app.use((req, res) => {
 })
 
 if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
-  server.listen(_.PORT || _.SRV_MAIN_PORT, () => {
+  server.listen(_.PORT, () => {
     console.log('#'.repeat(50))
-    console.log(`Server is up and running on *:${_.PORT || _.SRV_MAIN_PORT}`)
+    console.info(`Server is up and running on *:${_.PORT}`)
     console.log('#'.repeat(50))
   })
 }
