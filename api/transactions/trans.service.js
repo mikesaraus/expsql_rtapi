@@ -59,6 +59,7 @@ module.exports = {
     if (query_vals.length) pg_setvals.push(...query_vals)
     pg_client.query(pg_query, pg_setvals, (error, results) => {
       if (error) {
+        console.log(error)
         error.query = queryVars2Vals(pg_query, pg_setvals)
         return callBack(error)
       }
