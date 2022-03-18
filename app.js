@@ -14,8 +14,10 @@ const _ = process.env,
   bodyParser = require('body-parser'),
   getObj = require('lodash.get'),
   { throttle, decodeURL } = require('./lib/middleware')
-
-const { log_dirs } = require('./lib/data/db.structures'),
+const pkg = require('./package.json'),
+  CGU = require('cron-git-updater'),
+  fs = require('fs-extra'),
+  { log_dirs } = require('./lib/data/db.structures'),
   { logFilenameFormat } = require('./lib/fn/fn.format'),
   { createStream } = require('rotating-file-stream'),
   { existsSync, rmSync, readFileSync, writeFileSync } = require('fs'),
@@ -74,9 +76,10 @@ app
 
 if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
   const { getServerInfo } = require('./api/server/server.service')
-  getServerInfo().then((server_info) => console.log(JSON.stringify(server_info)))
+  getServerInfo().then((server_info) => console.log('SERVER INFORMATION:', JSON.stringify(server_info)))
   // Logging
   if (process.argv.includes('--log')) {
+    fs.ensureDirSync(log_dirs.main)
     const appResSend = app.response.send
     app.response.send = function sendOverWrite(body) {
       appResSend.call(this, body)
@@ -109,6 +112,15 @@ if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
     )
   }
 }
+
+/**
+ * System Updater
+ *
+ * Enabled on Production
+ */
+let newUpdater
+/** Updater Config*/
+let updater_config
 
 // Check if Running on Production
 if (!_.NODE_ENV || _.NODE_ENV != 'production') {
@@ -164,9 +176,27 @@ if (!_.NODE_ENV || _.NODE_ENV != 'production') {
     }
   }
 } else {
+  // Running on Production
   // Update Token Key Every Version
   _.TOKEN_KEY += `v${_.npm_package_version || ''}`
   _.TOKEN_KEY_PUB += `v${_.npm_package_version || ''}`
+
+  updater_config = {
+    repository: pkg.repository.url,
+    branch: 'main',
+    tempLocation: _.CRON_UPDATE_BACKUP || '../history',
+    keepAllBackup: _.CRON_UPDATE_KEEPALL_BACKUP == 'false' || _.CRON_UPDATE_KEEPALL_BACKUP == false ? false : true,
+  }
+  newUpdater = new CGU(updater_config)
+
+  // Schedule an Update
+  if (_.CRON_UPDATE != 'false' && _.CRON_UPDATE != false) {
+    const valid = newUpdater.validateSchedule(_.CRON_UPDATE)
+    // Check for Updates Default every 12 Midnight
+    if (!valid) _.CRON_UPDATE = '0 0 * * *'
+    newUpdater.schedule(_.CRON_UPDATE, _.TZ)
+    console.log(`Auto update task scheduled [ ${_.CRON_UPDATE} ].`)
+  } else console.log(`Auto update task disabled.`)
 }
 
 // Static Routes
