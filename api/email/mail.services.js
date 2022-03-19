@@ -1,7 +1,5 @@
 const _ = process.env,
   nodemailer = require('nodemailer'),
-  fs = require('fs'),
-  path = require('path'),
   { decode } = require('../../lib/fn/fn.generator').base64
 // Create mail transporter
 const transporter = nodemailer.createTransport({
@@ -27,7 +25,7 @@ module.exports = {
       if (err) {
         callback(err)
       } else {
-        transporter.sendMail(mailOptions, function (error, info) {
+        transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             callback(error)
           } else {
