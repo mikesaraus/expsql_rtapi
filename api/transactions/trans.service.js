@@ -31,21 +31,26 @@ module.exports = {
         if (cols.includes(key)) cols.splice(cols.indexOf(key), 1)
       })
     let pg_setvals = []
-    let pg_query = `INSERT INTO ${table} (trans_id, ${cols}) VALUES(${generateTransactionID(false)},`
-    for (var i = 1; i <= cols.length; i++) {
-      pg_query += `$` + i
-      if (i != cols.length) pg_query += `, `
-      pg_setvals.push(data[cols[i - 1]])
-    }
-    pg_query += `) RETURNING *;`
-    pg_client.query(pg_query, pg_setvals, (error, results) => {
-      if (error) {
-        error.query = queryVars2Vals(pg_query, pg_setvals)
-        return callBack(error)
+    generateTransactionID(
+      { branch: data.branch_location, long_version: data.long_trans_id ? true : false },
+      (formated_transid) => {
+        let pg_query = `INSERT INTO ${table} (trans_id, ${cols}) VALUES(${formated_transid},`
+        for (var i = 1; i <= cols.length; i++) {
+          pg_query += `$` + i
+          if (i != cols.length) pg_query += `, `
+          pg_setvals.push(data[cols[i - 1]])
+        }
+        pg_query += `) RETURNING *;`
+        pg_client.query(pg_query, pg_setvals, (error, results) => {
+          if (error) {
+            error.query = queryVars2Vals(pg_query, pg_setvals)
+            return callBack(error)
+          }
+          results.query = queryVars2Vals(pg_query, pg_setvals)
+          return callBack(null, results)
+        })
       }
-      results.query = queryVars2Vals(pg_query, pg_setvals)
-      return callBack(null, results)
-    })
+    )
   },
 
   service_view: (data, callBack) => {
@@ -64,7 +69,6 @@ module.exports = {
     if (query_vals.length) pg_setvals.push(...query_vals)
     pg_client.query(pg_query, pg_setvals, (error, results) => {
       if (error) {
-        console.log(error)
         error.query = queryVars2Vals(pg_query, pg_setvals)
         return callBack(error)
       }

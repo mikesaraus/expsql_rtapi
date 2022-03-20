@@ -45,11 +45,10 @@ module.exports = {
     const data = req.query
     service_user.service_view_branches(data, (err, resp) => {
       if (err) return res.json(errorJsonResponse(err))
-      let data = []
-      getObj(resp, 'rows', []).forEach((d) => {
-        if (d && d.branch_location) data.push(d.branch_location)
-      })
-      let response = {
+      const data = getObj(resp, 'rows', [])
+        .filter((d) => d && d.branch_location)
+        .map((d) => d.branch_location)
+      const response = {
         success: 1,
         data: data,
       }
