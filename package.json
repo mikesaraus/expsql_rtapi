@@ -8,9 +8,8 @@
   "main": "app.js",
   "scripts": {
     "setup": "node app.js --gensql database.sql --genenv",
-    "dev": "set DEBUG=express:* && nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js --log",
-    "dev-nolog": "set DEBUG=express:* && nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js",
-    "start": "set NODE_ENV=production && node app.js --log"
+    "dev": "nodemon -V --delay 2500ms --watch '*.*' --watch .env --ext 'js,json' app.js --log",
+    "start": "node app.js --log"
   },
   "keywords": [
     "NodeJS",

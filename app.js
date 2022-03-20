@@ -136,7 +136,7 @@ let newUpdater
 let updater_config
 
 // Check if Running on Production
-if (!_.NODE_ENV || _.NODE_ENV != 'production') {
+if (String(_.NODE_ENV || '').toLowerCase() != 'production') {
   require('./lib/fn/fn.nodemon')
   require('./lib/data/commands.js')
   // Save DB Structure
