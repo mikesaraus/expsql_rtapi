@@ -88,6 +88,11 @@ app
   .disable('x-powered-by')
 
 if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
+  // Check if Setup is Ok
+  if (!fs.existsSync('.env'))
+    throw new Error('Configuration of .env is missing. Please run "npm run setup" and update the values needed.')
+  if (!checkConfig().ok) throw new Error('Configuration of .env not Ok. Please update the values needed.')
+
   const { getServerInfo } = require('./api/server/server.service')
   getServerInfo().then((server_info) => console.log('SERVER INFORMATION:', JSON.stringify(server_info)))
   // Logging
@@ -113,30 +118,62 @@ if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
         `[:datetime] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
       :res-body`,
         {
-          stream: createStream(
-            (time, index) => logFilenameFormat(time, index, { prefix: 'access', ext: 'log', time: false }),
-            {
-              interval: '1d',
-              path: path.join(__dirname, log_dirs.main, log_dirs.request),
-            }
-          ),
+          stream: createStream(logFilenameFormat, {
+            interval: '1d',
+            path: path.join(__dirname, log_dirs.main, log_dirs.request),
+          }),
         }
       )
     )
   }
 }
 
-/**
- * System Updater
- *
- * Enabled on Production
- */
-let newUpdater
 /** Updater Config*/
-let updater_config
+const cgu_config = {
+  repository: pkjson.repository.url,
+  branch: 'main',
+  tempLocation: _.CRON_UPDATE_BACKUP,
+  keepAllBackup:
+    String(_.CRON_UPDATE_KEEPALL_BACKUP || '').toLowerCase() == 'false' || _.CRON_UPDATE_KEEPALL_BACKUP == false
+      ? false
+      : true,
+}
+
+if (process.argv.includes('--update')) {
+  const doUpdater = new CGU({ ...cgu_config, exitOnComplete: true })
+  doUpdater.update()
+}
+
+if (process.argv.includes('--force-update')) {
+  const forceUpdater = new CGU({ ...cgu_config, exitOnComplete: true })
+  forceUpdater.forceUpdate()
+}
+
+if (process.argv.includes('--schedule-update')) {
+  scheduleUpdate()
+}
+
+/**
+ * Schedule Auto Update
+ */
+const scheduleUpdate = () => {
+  const newUpdater = new CGU(cgu_config)
+  const valid = newUpdater.validateSchedule(_.CRON_UPDATE)
+  // Check for Updates Default every 12 Midnight
+  if (!valid) _.CRON_UPDATE = '0 0 * * *'
+  newUpdater.schedule(_.CRON_UPDATE, _.TZ)
+  console.log(`Auto update task scheduled [ ${_.CRON_UPDATE} ]`)
+}
 
 // Check if Running on Production
-if (String(_.NODE_ENV || '').toLowerCase() != 'production') {
+if (String(_.NODE_ENV || '').toLowerCase() == 'production') {
+  // Running on Production
+  // Update Token Key Every Version
+  _.TOKEN_KEY += `v${_.npm_package_version || ''}`
+  _.TOKEN_KEY_PUB += `v${_.npm_package_version || ''}`
+
+  scheduleUpdate()
+} else {
   require('./lib/fn/fn.nodemon')
   require('./lib/data/commands.js')
   // Save DB Structure
@@ -188,31 +225,6 @@ if (String(_.NODE_ENV || '').toLowerCase() != 'production') {
       process.exit(0)
     }
   }
-} else {
-  // Running on Production
-  // Update Token Key Every Version
-  _.TOKEN_KEY += `v${_.npm_package_version || ''}`
-  _.TOKEN_KEY_PUB += `v${_.npm_package_version || ''}`
-
-  updater_config = {
-    repository: pkjson.repository.url,
-    branch: 'main',
-    tempLocation: _.CRON_UPDATE_BACKUP,
-    keepAllBackup:
-      String(_.CRON_UPDATE_KEEPALL_BACKUP || '').toLowerCase() == 'false' || _.CRON_UPDATE_KEEPALL_BACKUP == false
-        ? false
-        : true,
-  }
-  newUpdater = new CGU(updater_config)
-
-  // Schedule an Update
-  if (_.CRON_UPDATE != 'false' && _.CRON_UPDATE != false) {
-    const valid = newUpdater.validateSchedule(_.CRON_UPDATE)
-    // Check for Updates Default every 12 Midnight
-    if (!valid) _.CRON_UPDATE = '0 0 * * *'
-    newUpdater.schedule(_.CRON_UPDATE, _.TZ)
-    console.log(`Auto update task scheduled [ ${_.CRON_UPDATE} ].`)
-  } else console.log(`Auto update task disabled.`)
 }
 
 // Static Routes

@@ -33,7 +33,6 @@ module.exports = {
     let pg_setvals = []
     const trans_id = generateTransactionID()
     let pg_query = `INSERT INTO ${table} (trans_id, ${cols}) VALUES(${trans_id},`
-    console.log('+++'.repeat(100), pg_query)
     for (var i = 1; i <= cols.length; i++) {
       pg_query += `$` + i
       if (i != cols.length) pg_query += `, `
