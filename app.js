@@ -118,10 +118,13 @@ if (getObj(_, 'npm_lifecycle_event', '').toLowerCase() != 'setup') {
         `[:datetime] :remote-addr - :remote-user ":method :url HTTP/:http-version" (:response-time ms) :status :res[content-length] ":referrer" ":user-agent" (Total :total-time ms)
       :res-body`,
         {
-          stream: createStream(logFilenameFormat, {
-            interval: '1d',
-            path: path.join(__dirname, log_dirs.main, log_dirs.request),
-          }),
+          stream: createStream(
+            (time, index) => logFilenameFormat(time, index, { prefix: 'access', ext: 'log', time: false }),
+            {
+              interval: '1d',
+              path: path.join(__dirname, log_dirs.main, log_dirs.request),
+            }
+          ),
         }
       )
     )
