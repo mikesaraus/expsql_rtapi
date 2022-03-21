@@ -35,7 +35,6 @@
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.2",
     "compression": "^1.7.4",
-    "core-js": "^3.21.1",
     "cors": "^2.8.5",
     "cron-git-updater": "^0.0.6",
     "dns-socket": "^4.2.2",
