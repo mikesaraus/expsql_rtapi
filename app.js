@@ -18,6 +18,7 @@ const _ = process.env,
 const pkjson = require('./package.json'),
   fs = require('fs-extra'),
   CGU = require('cron-git-updater'),
+  cron = require('node-cron'),
   appRootPath = require('app-root-path'),
   { log_dirs } = require('./lib/data/db.structures'),
   { logFilenameFormat } = require('./lib/fn/fn.format'),
@@ -176,6 +177,7 @@ if (String(_.NODE_ENV || '').toLowerCase() == 'production') {
   _.TOKEN_KEY_PUB += `v${_.npm_package_version || ''}`
 
   scheduleUpdate()
+  // Auto backup database everyday
 } else {
   require('./lib/fn/fn.nodemon')
   require('./lib/data/commands.js')
