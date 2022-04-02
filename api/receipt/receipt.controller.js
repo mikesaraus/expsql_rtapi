@@ -73,9 +73,10 @@ module.exports = {
               })
               trans_data.forEach((trans, i) => {
                 // Content Header
-                const trans_receipt_url = `http${req.secure ? 's' : ''}://${req.headers.host}${
-                  req.client.parser.incoming.baseUrl
-                }/${trans.trans_id}`
+                const trans_receipt_url = `http${getObj(req, 'secure') ? 's' : ''}://${getObj(
+                  req,
+                  'headers.host'
+                )}${getObj(req, 'client.parser.incoming.baseUrl', '')}/${trans.trans_id}`
                 const offset = 20
                 let font_size = 10,
                   x = doc.page.margins.left + offset,
