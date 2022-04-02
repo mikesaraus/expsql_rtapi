@@ -6,7 +6,7 @@ const _ = process.env,
 
 module.exports = {
   publicDetails: async (req, res) => {
-    serviceServerInfo('info.datetime', (cerr, cresponse) => {
+    serviceServerInfo(req, 'info.datetime', (cerr, cresponse) => {
       let response = cresponse
       if (cerr) return res.json(errorJsonResponse(cerr))
       service_user.service_view({ count: true }, async (err, resp) => {
@@ -19,7 +19,7 @@ module.exports = {
   },
 
   serverInfo: async (req, res) => {
-    serviceServerInfo('info', (err, response) => {
+    serviceServerInfo(req, 'info', (err, response) => {
       if (err) return res.json(errorJsonResponse(err))
       return res.json(response)
     })
@@ -27,7 +27,7 @@ module.exports = {
 
   getServerDetails: async (req, res) => {
     const data = Object.keys(req.query)
-    serviceServerInfo(data, (err, response) => {
+    serviceServerInfo(req, data, (err, response) => {
       if (err) return res.json(errorJsonResponse(err))
       return res.json(response)
     })

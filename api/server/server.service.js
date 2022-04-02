@@ -95,7 +95,7 @@ const getServerInfo = async () => {
 module.exports = {
   getServerInfo,
 
-  serviceServerInfo: async (data, callBack) => {
+  serviceServerInfo: async (req, data, callBack) => {
     const server = await getServerInfo()
     let response = {
       success: 1,
@@ -107,6 +107,12 @@ module.exports = {
         if (getObj(server, d)) response.data[d.replaceAll('.', '_')] = getObj(server, d)
       })
     } else response.data[data.replaceAll('.', '_')] = getObj(server, data)
+    if (req)
+      response.data.req_url = `http${getObj(req, 'secure') ? 's' : ''}://${getObj(req, 'headers.host')}${getObj(
+        req,
+        'client.parser.incoming.baseUrl',
+        ''
+      )}`
     callBack(null, response)
   },
 
