@@ -56,7 +56,7 @@ module.exports = {
 
               const doc = new PDFDocument({
                 layout: 'portrait',
-                size: [850, 550],
+                size: [684, 396], // [850, 550],
                 font: 'Helvetica',
                 // margin: 20,
                 margins: { top: 30, left: 20, right: 20, bottom: 30 },
@@ -71,6 +71,7 @@ module.exports = {
                   ModDate: today,
                 },
               })
+
               trans_data.forEach((trans, i) => {
                 // Content Header
                 const trans_receipt_url = `http${getObj(req, 'secure') ? 's' : ''}://${getObj(
@@ -78,66 +79,65 @@ module.exports = {
                   'headers.host'
                 )}${getObj(req, 'client.parser.incoming.baseUrl', '')}/${trans.trans_id}`
                 const offset = 20
-                let font_size = 10,
+                let font_size = 8,
                   x = doc.page.margins.left + offset,
                   y = doc.page.margins.top,
-                  second_half = doc.page.margins.left + 550
-
+                  second_half = Math.round(Number(doc.page.width) / 2)
                 if (data.header == 'true' || data.header === true)
                   doc
                     // column 1
-                    .image(logoLoc, (x += 10), y, {
-                      fit: [35, 35],
+                    .image(logoLoc, x, y, {
+                      fit: [30, 30],
                       align: 'center',
                       valign: 'center',
                     })
-                    .link(x, y, 35, 35, `${info.website}`)
-                    .fontSize((font_size = 12))
+                    .link(x, y, 30, 30, `${info.website}`)
+                    .fontSize((font_size = 9))
                     .text(String(info.name).substring(0, info.name_short.length).toUpperCase(), (x += 40), (y += 7))
-                    .fontSize((font_size = 9.5))
+                    .fontSize((font_size = 7.5))
                     .text(String(info.name).substring(info.name_short.length + 1), x, (y += font_size + 2))
 
                     // column 2
-                    .fontSize((font_size = 10))
-                    .text(`${info.address_1}`, (x += 125), (y = doc.page.margins.top))
+                    .fontSize((font_size = 8))
+                    .text(`${info.address_1}`, (x += 120), (y = doc.page.margins.top))
                     .text(`${info.address_2}`, x, (y += font_size + 2))
                     .text(`VAT REG. TIN ${info.tin}`, x, (y += font_size + 2))
 
                     // column 3
                     .text(`Tel. No.: ${info.phone}`, (x += 160), (y = doc.page.margins.top))
-                    .link(x + 35, y, 135, font_size, `tel:${info.phone}`)
+                    .link(x + 30, y, 120, font_size, `tel:${info.phone}`)
                     .text(`Website: ${info.website}`, x, (y += font_size + 2))
-                    .link(x + 40, y, 130, font_size, `${info.website}`)
+                    .link(x + 35, y, 115, font_size, `${info.website}`)
                     .text(`Email: ${info.email}`, x, (y += font_size + 2))
-                    .link(x + 30, y, 140, font_size, `mailto:${info.email}`)
+                    .link(x + 25, y, 123, font_size, `mailto:${info.email}`)
 
                     // column 4
-                    .image(logoLoc, (x += 230), (y = doc.page.margins.top), {
-                      fit: [35, 35],
+                    .image(logoLoc, (x += 160), (y = doc.page.margins.top), {
+                      fit: [30, 30],
                       align: 'center',
                       valign: 'center',
                     })
-                    .link(x, y, 35, 35, trans_receipt_url)
-                    .fontSize((font_size = 12))
+                    .link(x, y, 30, 30, trans_receipt_url)
+                    .fontSize((font_size = 9))
                     .text(String(info.name).substring(0, info.name_short.length).toUpperCase(), (x += 40), (y += 7))
-                    .fontSize((font_size = 9.5))
+                    .fontSize((font_size = 7.5))
                     .text(String(info.name).substring(info.name_short.length + 1), x, (y += font_size + 2))
 
                     // Header Line Separator
                     .opacity(0.5)
                     .lineCap()
-                    .moveTo(doc.page.margins.left, (y += 30))
+                    .moveTo(doc.page.margins.left, (y += 20))
                     .lineTo(doc.page.width - doc.page.margins.right, y)
                     .stroke('#c0c0c0')
                     // Vertical
                     .opacity(0.25)
                     .lineCap('butt')
                     .dash(10, { space: 1 })
-                    .moveTo(second_half - 20, 0)
-                    .lineTo(second_half - 20, doc.page.height)
+                    .moveTo(second_half, 70)
+                    .lineTo(second_half, doc.page.height)
                     .stroke('#c0c0c0')
                     .opacity(1)
-                else y = doc.page.margins.top + 50
+                else y = doc.page.margins.top + 40
 
                 // Calculate Total Paid
                 let totalPaid = Number(trans.amount_paid) + Number(trans.trans_fee)
@@ -145,43 +145,43 @@ module.exports = {
                 // BODY
                 // Left Side
                 doc
-                  .fontSize((font_size = 11))
+                  .fontSize((font_size = 9))
 
                   // Account ID
-                  .text('Account ID', (x = doc.page.margins.left + offset + 20), (y += 30))
-                  .text(':', x + 200, y)
-                  .text(`${trans.account_id}`, x + 230, y)
+                  .text('Account ID', (x = doc.page.margins.left + offset), (y += 10))
+                  .text(':', x + 100, y)
+                  .text(`${trans.account_id}`, x + 120, y)
 
                   // Name
-                  .text('Name', x, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${trans.account_name}`, x + 230, y)
+                  .text('Name', x, (y += font_size + 7))
+                  .text(':', x + 100, y)
+                  .text(`${trans.account_name}`, x + 120, y, { width: 175 })
 
                   // Payment Method
-                  .text('Payment Method', x, (y += font_size + 10))
-                  .text(':', x + 200, y)
+                  .text('Payment Method', x, (y += font_size * 2 + 10))
+                  .text(':', x + 100, y)
                   .text(
                     `${trans.paymethod}${
                       trans.check_bank && trans.check_no ? ' - ' + trans.check_bank + ' (' + trans.check_no + ')' : ''
                     }`,
-                    x + 230,
+                    x + 120,
                     y
                   )
 
                   // Date Paid
-                  .text('Date', x, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${new Date(trans.date_paid).toString().replace(/ GMT.+/, '')}`, x + 230, y)
+                  .text('Date', x, (y += font_size + 7))
+                  .text(':', x + 100, y)
+                  .text(`${new Date(trans.date_paid).toString().replace(/ GMT.+/, '')}`, x + 120, y)
 
                   // Transaction Id
-                  .text('Transaction Id', x, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${trans.trans_id}`, x + 230, y)
-                  .link(x + 230, y, 150, font_size, trans_receipt_url)
+                  .text('Transaction Id', x, (y += font_size + 7))
+                  .text(':', x + 100, y)
+                  .text(`${trans.trans_id}`, x + 120, y)
+                  .link(x + 120, y, 150, font_size, trans_receipt_url)
 
                   // Received By
-                  .text('Received by', x, (y += font_size + 10))
-                  .text(':', x + 200, y)
+                  .text('Received by', x, (y += font_size + 7))
+                  .text(':', x + 100, y)
                   .text(
                     users[trans.receiver_id]
                       ? `${getObj(users[trans.receiver_id], 'firstname', '_').charAt(0)}.${getObj(
@@ -190,104 +190,98 @@ module.exports = {
                           '_'
                         )}`
                       : trans.receiver_id,
-                    x + 230,
+                    x + 120,
                     y
                   )
 
                 doc
-                  .fontSize((font_size = 11))
+                  .fontSize((font_size = 9))
 
                   // REPRINTED
-                  .text('REPRINTED', x + 15, (y += font_size + 20))
+                  .text('REPRINTED', x, y + 50)
 
                   // VAT Sales
-                  .text('VAT Sales', x + 30, (y += font_size + 15))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(totalPaid)}`, x + 230, y)
+                  .text('VAT Sales', (x += 100), (y += font_size + 10))
+                  .text(`${formatMoney(totalPaid)}`, x + 125, y)
 
                   // Non-VAT Sales
-                  .text('Non-VAT Sales', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(0)}`, x + 230, y)
+                  .text('Non-VAT Sales', x, (y += font_size + 7))
+                  .text(`${formatMoney(0)}`, x + 125, y)
 
                   // VAT Zero Sales
-                  .text('VAT Zero Related Sales', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(0)}`, x + 230, y)
+                  .text('VAT Zero Related Sales', x, (y += font_size + 7))
+                  .text(`${formatMoney(0)}`, x + 125, y)
 
                   // VAT Amount
-                  .text('VAT Amount', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(0)}`, x + 230, y)
+                  .text('VAT Amount', x, (y += font_size + 7))
+                  .text(`${formatMoney(0)}`, x + 125, y)
 
                   // BIR 2306
-                  .text('BIR 2306', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(0)}`, x + 230, y)
+                  .text('BIR 2306', x, (y += font_size + 7))
+                  .text(`${formatMoney(0)}`, x + 125, y)
 
                   // BIR 2307
-                  .text('ADVANCE', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(0)}`, x + 230, y)
+                  .text('ADVANCE', x, (y += font_size + 7))
+                  .text(`${formatMoney(0)}`, x + 125, y)
 
                   // Total
-                  .text('Total', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(totalPaid)}`, x + 230, y)
+                  .text('Total', x, (y += font_size + 7))
+                  .text(`${formatMoney(totalPaid)}`, x + 125, y)
 
                   // Amount Received
-                  .text('Amount Received', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(trans.amount_received)}`, x + 230, y)
+                  .text('Amount Received', x, (y += font_size + 7))
+                  .text(`${formatMoney(trans.amount_received)}`, x + 125, y)
 
                   // Amount Change
-                  .text('Amount Change', x + 30, (y += font_size + 10))
-                  .text(':', x + 200, y)
-                  .text(`${formatMoney(trans.amount_received - totalPaid)}`, x + 230, y)
-                ;(font_size = 10), (x = second_half), (y = doc.page.margins.top + 50)
+                  .text('Amount Change', x, (y += font_size + 7))
+                  .text(`${formatMoney(trans.amount_received - totalPaid)}`, x + 125, y)
+
+                font_size = 8
+                x = second_half
+                y = doc.page.margins.top + 40
 
                 // Right Side
                 doc
-                  .fontSize((font_size = 10))
+                  .fontSize((font_size = 8))
                   // Customers Copy
                   .opacity(0.25)
-                  .text('Customers Copy', x + 160, (y += font_size + 10))
+                  .text('Customers Copy', x * 2 - 100, (y += 7))
                   .opacity(1)
 
-                  // Account Id
-                  .text('Account Id', x, (y += font_size + 15))
+                  // Account Idoffset
+                  .text('Account Id', (x += offset), (y += font_size + 10))
                   .text(':', x + 100, y)
-                  .text(`${trans.account_id}`, x + 110, y)
+                  .text(`${trans.account_id}`, x + 120, y)
 
                   // Name
-                  .text('Name', x, (y += font_size + 10))
+                  .text('Name', x, (y += font_size + 7))
                   .text(':', x + 100, y)
-                  .text(`${trans.account_name}`, x + 110, y)
+                  .text(`${trans.account_name}`, x + 120, y, { width: 175 })
 
                   // Payment Method
-                  .text('Payment Method', x, (y += font_size + 10))
+                  .text('Payment Method', x, (y += font_size * 2 + 10))
                   .text(':', x + 100, y)
                   .text(
                     `${trans.paymethod}${
                       trans.check_bank && trans.check_no ? ' - ' + trans.check_bank + ' (' + trans.check_no + ')' : ''
                     }`,
-                    x + 110,
+                    x + 120,
                     y
                   )
 
                   // Date Paid
-                  .text('Date', x, (y += font_size + 10))
+                  .text('Date', x, (y += font_size + 7))
                   .text(':', x + 100, y)
-                  .text(`${new Date(trans.date_paid).toString().replace(/ GMT.+/, '')}`, x + 110, y)
+                  .text(`${new Date(trans.date_paid).toString().replace(/ GMT.+/, '')}`, x + 120, y)
 
                   // Transaction Id
-                  .text('Transaction Id', x, (y += font_size + 10))
+                  .text('Transaction Id', x, (y += font_size + 7))
                   .text(':', x + 100, y)
-                  .text(`${trans.trans_id}`, x + 110, y)
-                  .link(x + 110, y, 150, font_size, trans_receipt_url)
+                  .text(`${trans.trans_id}`, x + 120, y)
+                  .link(x + 120, y, 150, font_size, trans_receipt_url)
 
                   // Received By
-                  .text('Received by', x, (y += font_size + 10))
+                  .text('Received by', x, (y += font_size + 7))
                   .text(':', x + 100, y)
                   .text(
                     users[trans.receiver_id]
@@ -297,82 +291,90 @@ module.exports = {
                           '_'
                         )}`
                       : trans.receiver_id,
-                    x + 110,
+                    x + 120,
                     y
                   )
 
                   // REPRINTED
-                  .text('REPRINTED', x, (y += font_size + 20))
+                  .text('REPRINTED', x, y + 50 - font_size - 7)
 
                   // VAT Sales
-                  .text('VAT Sales', x, (y += font_size + 15))
+                  .text('VAT Sales', (x += 100), (y += font_size + 10))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(totalPaid)}`, x + 135, y)
 
                   // Non-VAT Sales
-                  .text('Non-VAT Sales', x, (y += font_size + 10))
+                  .text('Non-VAT Sales', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(0)}`, x + 135, y)
 
                   // VAT Zero Sales
-                  .text('VAT Zero Related Sales', x, (y += font_size + 10))
+                  .text('VAT Zero Related Sales', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(0)}`, x + 135, y)
 
                   // VAT Amount
-                  .text('VAT Amount', x, (y += font_size + 10))
+                  .text('VAT Amount', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(0)}`, x + 135, y)
 
                   // BIR 2306
-                  .text('BIR 2306', x, (y += font_size + 10))
+                  .text('BIR 2306', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(0)}`, x + 135, y)
 
                   // BIR 2307
-                  .text('ADVANCE', x, (y += font_size + 10))
+                  .text('ADVANCE', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(0)}`, x + 135, y)
 
                   // Total
-                  .text('Total', x, (y += font_size + 10))
+                  .text('Total', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(totalPaid)}`, x + 135, y)
 
                   // Amount Received
-                  .text('Amount Received', x, (y += font_size + 10))
+                  .text('Amount Received', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(trans.amount_received)}`, x + 135, y)
 
                   // Amount Change
-                  .text('Amount Change', x, (y += font_size + 10))
+                  .text('Amount Change', x, (y += font_size + 7))
                   .text(':', x + 120, y)
                   .text(`${formatMoney(trans.amount_received - totalPaid)}`, x + 135, y)
 
                 // Footer
                 if (data.footer == 'true' || data.footer === true)
                   doc
-                    .fontSize((font_size = 10))
+                    .fontSize((font_size = 8))
                     .fillOpacity(0.5)
 
                     // Left Side
-                    .text('THIS IS A SYSTEM GENERATED ACKNOWLEDGEMENT RECEIPT.', doc.page.margins.left + 15, 485)
+                    .text(
+                      'THIS IS A SYSTEM GENERATED ACKNOWLEDGEMENT RECEIPT.',
+                      (x = doc.page.margins.left + 15),
+                      (y = doc.page.height - 55)
+                    )
                     .text(
                       `CAS#: ${trans.trans_id} On: ${new Date(trans.date_paid).toLocaleDateString()} Series: ${new Date(
                         trans.date_paid
                       ).getFullYear()}`,
-                      doc.page.margins.left + 15,
-                      500
+                      x,
+                      (y += font_size + 5)
                     )
                     // Right Side
                     .fontSize((font_size = 7))
-                    .text('THIS IS A SYSTEM GENERATED ACKNOWLEDGEMENT RECEIPT.', doc.page.margins.left + 15 + 535, 485)
+                    .text(
+                      'THIS IS A SYSTEM GENERATED ACKNOWLEDGEMENT RECEIPT.',
+                      (x = second_half + offset),
+                      (y = doc.page.height - 55)
+                    )
                     .text(
                       `CAS#: ${trans.trans_id} On: ${new Date(trans.date_paid).toLocaleDateString()} Series: ${new Date(
                         trans.date_paid
                       ).getFullYear()}`,
-                      doc.page.margins.left + 15 + 535,
-                      500
+                      x,
+                      (y += font_size + 5)
                     )
                     .fillOpacity(1)
 

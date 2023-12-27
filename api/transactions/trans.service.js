@@ -1,11 +1,14 @@
 const _ = process.env,
   { pg_client } = require('../../config').database,
   { dbTables } = require('../../lib/data/db.structures'),
+  accounts = require('../accounts/account.service'),
   { queryVars2Vals, queryConditioner } = require('../../lib/fn/fn.db'),
   { generateTransactionID } = require('../../lib/fn/fn.generator'),
+  { errorJsonResponse } = require('../../lib/fn/fn.db'),
   getObj = require('lodash.get')
 // db table
 const table = _.DBTBL_TRANSACTIONS
+const create_account = accounts.service_create
 
 module.exports = {
   service_create: (data, callBack) => {
@@ -29,6 +32,25 @@ module.exports = {
     if (noncol.length)
       noncol.forEach((key) => {
         if (cols.includes(key)) cols.splice(cols.indexOf(key), 1)
+      })
+    if (!data.exist)
+      create_account({ account_id: data.account_id, account_name: data.account_name }, (err, results) => {
+        if (err) {
+          console.log('Failed Adding New Account:', errorJsonResponse(err))
+        }
+        let jres = {
+          success: 1,
+          data: results ? results.rows[0] || [] : [],
+        }
+        console.log(
+          'New Account Added:',
+          JSON.stringify({
+            command: results ? results.command : '',
+            query: results ? results.query : '',
+            rowCount: results ? results.rowCount : 0,
+            response: jres,
+          })
+        )
       })
     let pg_setvals = []
     const trans_id = generateTransactionID()
